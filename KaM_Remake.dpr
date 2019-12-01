@@ -304,6 +304,7 @@ uses
   KM_UnitTaskMining in 'src\units\tasks\KM_UnitTaskMining.pas',
   KM_UnitTaskSelfTrain in 'src\units\tasks\KM_UnitTaskSelfTrain.pas',
   KM_UnitTaskThrowRock in 'src\units\tasks\KM_UnitTaskThrowRock.pas',
+  KM_UnitTaskTransfer in 'src\units\tasks\KM_UnitTaskTransfer.pas',
 	
   KM_BinPacking in 'src\utils\KM_BinPacking.pas',
   KM_CommonUtils in 'src\utils\KM_CommonUtils.pas',

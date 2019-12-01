@@ -207,7 +207,7 @@ const
   MAX_WARES_IN_HOUSE     = 5;    //Maximum resource items allowed to be in house
   MAX_WARES_OUT_WORKSHOP = 5;    //Maximum sum resource items allowed to output in workshops. Value: 5 - 20;
   MAX_WARES_ORDER        = 999;  //Number of max allowed items to be ordered in production houses (Weapon/Armor/etc)
-
+  MAX_WARES_ON_HORSE     = 12;
   MAX_UNITS_AROUND_HOUSE = 50;
 
 const
@@ -567,7 +567,7 @@ const //Corresponding indices in units.rx
 
 type
   TKMUnitTaskType = ( uttUnknown, //Uninitialized task to detect bugs
-        uttSelfTrain, uttDeliver,         uttBuildRoad,  uttBuildWine,        uttBuildField,
+        uttSelfTrain, uttDeliver, uttTransfer,        uttBuildRoad,  uttBuildWine, uttBuildField,
         uttBuildHouseArea, uttBuildHouse, uttBuildHouseRepair, uttGoHome,    uttDismiss,
         uttGoEat,     uttMining,          uttDie,        uttGoOutShowHungry,  uttAttackHouse,
         uttThrowRock);

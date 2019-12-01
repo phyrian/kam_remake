@@ -4,7 +4,7 @@ interface
 uses
   Classes, Math, SysUtils, KromUtils, Types,
   KM_CommonClasses, KM_CommonTypes, KM_Defaults, KM_Points, KM_CommonUtils,
-  KM_Terrain, KM_ResHouses, KM_ResWares, KM_Houses, KM_HouseSchool, KM_HouseBarracks, KM_HouseInn;
+  KM_Terrain, KM_ResHouses, KM_ResWares, KM_Houses, KM_HouseMarket, KM_HouseSchool, KM_HouseBarracks, KM_HouseInn;
 
 //Memo on directives:
 //Dynamic - declared and used (overriden) occasionally
@@ -209,6 +209,7 @@ type
     function  GetMovementVector: TKMPointF;
     function  IsIdle: Boolean;
     procedure TrainInHouse(aSchool: TKMHouseSchool);
+    procedure Transfer(aMarket: TKMHouseMarket; aStore: TKMHouseStore; Res: TKMWareType; Amount: Word; aID: Integer);
 
     function CanStepTo(X,Y: Integer; aPass: TKMTerrainPassability): Boolean;
     function CanWalkTo(const aTo: TKMPoint; aDistance: Single): Boolean; overload;
@@ -354,6 +355,7 @@ uses
   KM_UnitTaskMining,
   KM_UnitTaskSelfTrain,
   KM_UnitTaskThrowRock,
+  KM_UnitTaskTransfer,
   KM_GameTypes,
   KM_Log;
 
@@ -1202,6 +1204,7 @@ begin
       uttDismiss:         fTask := TKMTaskDismiss.Load(LoadStream);
       uttAttackHouse:     fTask := TKMTaskAttackHouse.Load(LoadStream);
       uttThrowRock:       fTask := TKMTaskThrowRock.Load(LoadStream);
+      uttTransfer:        fTask := TKMTaskTransfer.Load(LoadStream);
       uttGoEat:           fTask := TKMTaskGoEat.Load(LoadStream);
       uttMining:          fTask := TKMTaskMining.Load(LoadStream);
       uttDie:             fTask := TKMTaskDie.Load(LoadStream);
@@ -1276,6 +1279,13 @@ end;
 procedure TKMUnit.TrainInHouse(aSchool: TKMHouseSchool);
 begin
   fTask := TKMTaskSelfTrain.Create(Self, aSchool);
+end;
+
+
+//FIXME: Unit type should be more specific
+procedure TKMUnit.Transfer(aMarket: TKMHouseMarket; aStore: TKMHouseStore; Res: TKMWareType; Amount: Word; aID: Integer);
+begin
+  fTask := TKMTaskTransfer.Create(Self, aMarket, aStore, Res, Amount, aID);
 end;
 
 
@@ -2044,6 +2054,8 @@ const
   TASK_TEXT: array[TKMUnitTaskType] of Integer = (
       -1,-1,                   //uttUnknown, uttSelfTrain
       TX_UNIT_TASK_DELVERING,  //uttDeliver
+      TX_UNIT_TASK_DELVERING,  //uttTransfer
+//FIXME:      TX_UNIT_TASK_TRANSFERING,//uttTransfer
       TX_UNIT_TASK_ROAD,       //uttBuildRoad
       TX_UNIT_TASK_WINEFIELD,  //uttBuildWine
       TX_UNIT_TASK_FIELD,      //uttBuildField

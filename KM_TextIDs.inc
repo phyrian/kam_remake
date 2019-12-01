@@ -199,6 +199,7 @@ TX_MSG_TROOP_HUNGRY = 180; //This troop is really hungry, they better get someth
 TX_POPUP_PAUSE = 181; //PAUSE
 
 TX_UNIT_TASK_DELVERING = 182; //Delivering
+//FIXME: TX_UNIT_TASK_TRANSFERING = 1262; //Transfering
 TX_UNIT_TASK_ROAD = 183; //Constructing road
 TX_UNIT_TASK_FIELD = 184; //Digging field
 TX_UNIT_TASK_WINEFIELD = 185; //Constructing winefield
