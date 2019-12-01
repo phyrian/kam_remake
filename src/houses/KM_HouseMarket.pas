@@ -3,25 +3,35 @@ unit KM_HouseMarket;
 interface
 uses
   KM_Houses,
-  KM_ResWares, KM_ResHouses,
+  KM_ResWares, KM_ResHouses, KM_Units,
   KM_CommonClasses, KM_Defaults;
 
 type
+  TKMTradeKind = (tkUnknown, tkExchange, tkTransfer); //FIXME: Use or not?
+
   //Marketplace
   TKMHouseMarket = class(TKMHouse)
   private
     fResFrom, fResTo: TKMWareType;
+    fTransferTo: TKMHouseStore;
     fMarketResIn: array [WARE_MIN..WARE_MAX] of Word;
     fMarketResOut: array [WARE_MIN..WARE_MAX] of Word;
     fMarketDeliveryCount: array [WARE_MIN..WARE_MAX] of Word;
+    fHorses: array [1..MAX_WARES_IN_HOUSE] of TKMUnit;
+    fHorseCount: Byte;
     fTradeAmount: Word;
+    fTradeKind: TKMTradeKind;
     procedure AttemptExchange;
     procedure SetResFrom(aRes: TKMWareType);
     procedure SetResTo(aRes: TKMWareType);
+    procedure SetTransferTo(aStore: TKMHouseStore);
 
     function GetMarkerResToTrade(aWare: TKMWareType): Word;
     procedure SetMarkerResToTrade(aWare: TKMWareType; aCnt: Word);
     property MarkerResToTrade[aWare: TKMWareType]: Word read GetMarkerResToTrade write SetMarkerResToTrade;
+    function GetAvailableHorse: TKMUnit;
+    property AvailableHorse: TKMUnit read GetAvailableHorse;
+    procedure CreateHorseInside;
   protected
     function GetResOrder(aId: Byte): Integer; override;
     procedure SetResOrder(aId: Byte; aValue: Integer); override;
@@ -41,6 +51,8 @@ type
 
     function AllowedToTrade(aRes: TKMWareType): Boolean;
     function TradeInProgress: Boolean;
+    property TradeKind: TKMTradeKind read fTradeKind;
+    property TransferTo: TKMHouseStore read fTransferTo write SetTransferTo;
     function GetResTotal(aWare: TKMWareType): Word; overload;
     function CheckResIn(aWare: TKMWareType): Word; override;
     function CheckResOut(aWare: TKMWareType): Word; override;
@@ -70,6 +82,7 @@ begin
 
   fResFrom := wtNone;
   fResTo := wtNone;
+  fHorseCount := 0;
 end;
 
 
@@ -80,6 +93,8 @@ begin
   //Count resources as lost
   for R := WARE_MIN to WARE_MAX do
     gHands[fOwner].Stats.WareConsumed(R, fMarketResIn[R] + fMarketResOut[R]);
+
+  //TODO: Horses inside should disappear (without statistics impact!)
 
   inherited;
 end;
@@ -182,8 +197,10 @@ end;
 procedure TKMHouseMarket.AttemptExchange;
 var
   TradeCount: Word;
+  PackHorse: TKMUnit;
 begin
-  Assert((fResFrom <> wtNone) and (fResTo <> wtNone) and (fResFrom <> fResTo));
+  Assert((fResFrom <> wtNone) and (((fResTo <> wtNone) and (fResFrom <> fResTo))
+          or ((fTransferTo <> nil) and (not fTransferTo.IsDestroyed))));
 
   //Script might have blocked these resources from trading, if so reset trade order
   if TradeInProgress
@@ -193,22 +210,44 @@ begin
     Exit;
   end;
 
-  if TradeInProgress and (MarkerResToTrade[fResFrom] >= RatioFrom) then
-  begin
-    //How much can we trade
-    TradeCount := Min((MarkerResToTrade[fResFrom] div RatioFrom), fTradeAmount);
+  PackHorse := AvailableHorse;
+  if TradeInProgress then
+    if (fResTo <> nil) and (MarkerResToTrade[fResFrom] >= RatioFrom) then //exchange
+    begin
+      //How much can we trade
+      TradeCount := Min((MarkerResToTrade[fResFrom] div RatioFrom), fTradeAmount);
 
-    MarkerResToTrade[fResFrom] := MarkerResToTrade[fResFrom] - TradeCount * RatioFrom;
-    gHands[fOwner].Stats.WareConsumed(fResFrom, TradeCount * RatioFrom);
-    Dec(fTradeAmount, TradeCount);
-    Inc(fMarketResOut[fResTo], TradeCount * RatioTo);
-    gHands[fOwner].Stats.WareProduced(fResTo, TradeCount * RatioTo);
-    gHands[fOwner].Deliveries.Queue.AddOffer(Self, fResTo, TradeCount * RatioTo);
+      MarkerResToTrade[fResFrom] := MarkerResToTrade[fResFrom] - TradeCount * RatioFrom;
+      gHands[fOwner].Stats.WareConsumed(fResFrom, TradeCount * RatioFrom);
+      Dec(fTradeAmount, TradeCount);
+      Inc(fMarketResOut[fResTo], TradeCount * RatioTo);
+      gHands[fOwner].Stats.WareProduced(fResTo, TradeCount * RatioTo);
+      gHands[fOwner].Deliveries.Queue.AddOffer(Self, fResTo, TradeCount * RatioTo);
 
-    gScriptEvents.ProcMarketTrade(Self, fResFrom, fResTo);
-    gScriptEvents.ProcWareProduced(Self, fResTo, TradeCount * RatioTo);
-    gSoundPlayer.Play(sfxnTrade, fPosition);
-  end;
+      gScriptEvents.ProcMarketTrade(Self, fResFrom, fResTo);
+      gScriptEvents.ProcWareProduced(Self, fResTo, TradeCount * RatioTo);
+      gSoundPlayer.Play(sfxnTrade, fPosition);
+    end
+    else if (fTransferTo <> nil)
+      and (MarkerResToTrade[fResFrom] >= Min(MAX_WARES_ON_HORSE, fTradeAmount))
+      and (PackHorse <> nil) then //transfer
+    begin
+      //How much can we transfer
+      TradeCount := Min(MAX_WARES_ON_HORSE, fTradeAmount);
+
+      //Removed ratio as it's "1:1"
+      MarkerResToTrade[fResFrom] := MarkerResToTrade[fResFrom] - TradeCount;
+      gHands[fOwner].Stats.WareConsumed(fResFrom, TradeCount);
+      Dec(fTradeAmount, TradeCount);
+
+      //Start the PackHorse Transfer task
+      PackHorse.Transfer(Self, fTransferTo, fResFrom, TradeCount, 0);
+
+      //TODO: Some script event might come here
+//      gScriptEvents.ProcMarketTrade(Self, fResFrom, fResTo);
+//      gScriptEvents.ProcWareProduced(Self, fResTo, TradeCount * RatioTo);
+      gSoundPlayer.Play(sfxnTrade, fPosition);
+    end;
 end;
 
 
@@ -276,8 +315,19 @@ begin
     Exit;
 
   fResTo := aRes;
+  fTransferTo := nil;
   if fResFrom = fResTo then
     fResFrom := wtNone;
+end;
+
+
+procedure TKMHouseMarket.SetTransferTo(aStore: TKMHouseStore);
+begin
+  if TradeInProgress then
+    Exit;
+
+  fResTo := wtNone;
+  fTransferTo := aStore;
 end;
 
 
@@ -309,6 +359,46 @@ begin
 end;
 
 
+//Maybe not the prettiest solution, trying to look up horses with IsIdle
+function TKMHouseMarket.GetAvailableHorse: TKMUnit;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 1 to fHorseCount do
+    if (fHorses[I] <> nil) and (fHorses[I].IsIdle)
+        and (fHorses.InHouse = Self) then
+    begin
+      Result := fHorses[I];
+      break;
+    end;
+end;
+
+
+procedure TKMHouseMarket.CreateHorseInside;
+var
+  I: Integer;
+  U: TKMUnit;
+begin
+  if fHorseCount = MAX_WARES_IN_HOUSE then Exit;
+
+  U := gHands[fOwner].TrainUnit(utRecruit, Entrance);
+  U.Visible := False;
+  U.InHouse := Self;
+  U.Home := Self; //When walking out Home is used to remove recruit from barracks
+//  gHands[fOwner].Stats.UnitCreated(utRecruit, False); - No impact on stats
+
+  for I := 1 to fHorseCount do
+    if fHorses[I] = nil then
+    begin
+      fHorses[I] := U;
+      Inc(fHorseCount);
+      break;
+    end;
+end;
+
+
+
 function TKMHouseMarket.TradeInProgress: Boolean;
 begin
   Result := fTradeAmount > 0;
@@ -323,7 +413,7 @@ const
 var
   ResRequired, OrdersAllowed, OrdersRemoved: Integer;
 begin
-  if (fResFrom = wtNone) or (fResTo = wtNone) or (fResFrom = fResTo) then Exit;
+  if (fResFrom = wtNone) or ((fResTo = wtNone) and (fTransferTo = nil)) or (fResFrom = fResTo) then Exit;
 
   fTradeAmount := EnsureRange(aValue, 0, MAX_WARES_ORDER);
 
@@ -390,6 +480,7 @@ begin
 end;
 
 
+//TODO: New props
 constructor TKMHouseMarket.Load(LoadStream: TKMemoryStream);
 begin
   inherited;
@@ -403,6 +494,7 @@ begin
 end;
 
 
+//TODO: New props
 procedure TKMHouseMarket.Save(SaveStream: TKMemoryStream);
 begin
   inherited;
