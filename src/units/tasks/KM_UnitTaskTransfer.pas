@@ -61,7 +61,7 @@ begin
   inherited Create(aHorse);
   fType := uttTransfer;
 
-  Assert((aFrom <> nil) and (aTo <> nil) and (Res <> wtNone) and (Amount < MAX_WARES_ON_HORSE), 'PackHorse ' + IntToStr(fUnit.UID) + ': invalid Transfer task');
+  Assert((aFrom <> nil) and (aTo <> nil) and (Res <> wtNone) and (Amount <= MAX_WARES_ON_HORSE), 'PackHorse ' + IntToStr(fUnit.UID) + ': invalid Transfer task');
 
   //FIXME: Change it to Transfer log
   if gLog.CanLogDelivery then

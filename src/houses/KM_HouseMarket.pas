@@ -203,8 +203,8 @@ begin
           or ((fTransferTo <> nil) and (not fTransferTo.IsDestroyed))));
 
   //Script might have blocked these resources from trading, if so reset trade order
-  if TradeInProgress
-  and (not AllowedToTrade(fResFrom) or not AllowedToTrade(fResTo)) then
+  if TradeInProgress and ((not AllowedToTrade(fResFrom))
+      or ((fResTo <> wtNone) and (not AllowedToTrade(fResTo)))) then
   begin
     SetResOrder(0, 0);
     Exit;
@@ -407,6 +407,12 @@ const
 var
   ResRequired, OrdersAllowed, OrdersRemoved: Integer;
 begin
+  //FIXME: Remove
+  //The next three lines are hardcoding that the next exchange will be a transfer to one of the next player's storehouse
+  CreateHorseInside;
+  Inc(fMarketResIn[wtHorse]); //Just to see how many "horse" we have in action
+  TransferTo := TKMHouseStore(gHands[Owner + 1].FindHouse(htStore));
+
   if (fResFrom = wtNone) or ((fResTo = wtNone) and (fTransferTo = nil)) or (fResFrom = fResTo) then Exit;
 
   fTradeAmount := EnsureRange(aValue, 0, MAX_WARES_ORDER);
