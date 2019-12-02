@@ -3,7 +3,7 @@ unit KM_HouseMarket;
 interface
 uses
   KM_Houses,
-  KM_ResWares, KM_ResHouses, KM_Units,
+  KM_ResWares, KM_ResHouses,
   KM_CommonClasses, KM_Defaults;
 
 type
@@ -17,7 +17,7 @@ type
     fMarketResIn: array [WARE_MIN..WARE_MAX] of Word;
     fMarketResOut: array [WARE_MIN..WARE_MAX] of Word;
     fMarketDeliveryCount: array [WARE_MIN..WARE_MAX] of Word;
-    fHorses: array [1..MAX_WARES_IN_HOUSE] of TKMUnit;
+    fHorses: array [1..MAX_WARES_IN_HOUSE] of Pointer;
     fHorseCount: Byte;
     fTradeAmount: Word;
     fTradeKind: TKMTradeKind;
@@ -29,9 +29,8 @@ type
     function GetMarkerResToTrade(aWare: TKMWareType): Word;
     procedure SetMarkerResToTrade(aWare: TKMWareType; aCnt: Word);
     property MarkerResToTrade[aWare: TKMWareType]: Word read GetMarkerResToTrade write SetMarkerResToTrade;
-    function GetAvailableHorse: TKMUnit;
-    property AvailableHorse: TKMUnit read GetAvailableHorse;
-    procedure CreateHorseInside;
+    function GetAvailableHorse: Pointer;
+    property AvailableHorse: Pointer read GetAvailableHorse;
   protected
     function GetResOrder(aId: Byte): Integer; override;
     procedure SetResOrder(aId: Byte; aValue: Integer); override;
@@ -60,6 +59,7 @@ type
     procedure ResTakeFromOut(aWare: TKMWareType; aCount: Word = 1; aFromScript: Boolean = False); override;
     function ResCanAddToIn(aRes: TKMWareType): Boolean; override;
     function ResOutputAvailable(aRes: TKMWareType; const aCount: Word): Boolean; override;
+    procedure CreateHorseInside;
 
     procedure Save(SaveStream: TKMemoryStream); override;
     procedure Paint; override;
@@ -72,7 +72,7 @@ uses
   KM_RenderPool,
   KM_Hand, KM_HandsCollection, KM_HandLogistics,
   KM_Resource, KM_ResSound,
-  KM_ScriptingEvents, KM_Sound;
+  KM_ScriptingEvents, KM_Sound, KM_Units;
 
 
 { TKMHouseMarket }
@@ -210,9 +210,9 @@ begin
     Exit;
   end;
 
-  PackHorse := AvailableHorse;
+  PackHorse := TKMUnit(AvailableHorse);
   if TradeInProgress then
-    if (fResTo <> nil) and (MarkerResToTrade[fResFrom] >= RatioFrom) then //exchange
+    if ((fResTo <> wtNone) and (MarkerResToTrade[fResFrom] >= RatioFrom)) then //exchange
     begin
       //How much can we trade
       TradeCount := Min((MarkerResToTrade[fResFrom] div RatioFrom), fTradeAmount);
@@ -360,14 +360,14 @@ end;
 
 
 //Maybe not the prettiest solution, trying to look up horses with IsIdle
-function TKMHouseMarket.GetAvailableHorse: TKMUnit;
+function TKMHouseMarket.GetAvailableHorse: Pointer;
 var
   I: Integer;
 begin
   Result := nil;
   for I := 1 to fHorseCount do
-    if (fHorses[I] <> nil) and (fHorses[I].IsIdle)
-        and (fHorses.InHouse = Self) then
+    if (fHorses[I] <> nil) and (TKMUnit(fHorses[I]).IsIdle)
+        and (TKMUnit(fHorses[I]).InHouse = Self) then
     begin
       Result := fHorses[I];
       break;
@@ -388,13 +388,8 @@ begin
   U.Home := Self; //When walking out Home is used to remove recruit from barracks
 //  gHands[fOwner].Stats.UnitCreated(utRecruit, False); - No impact on stats
 
-  for I := 1 to fHorseCount do
-    if fHorses[I] = nil then
-    begin
-      fHorses[I] := U;
-      Inc(fHorseCount);
-      break;
-    end;
+  fHorses[fHorseCount + 1] := U; //Index starts at 1 here
+  Inc(fHorseCount);
 end;
 
 

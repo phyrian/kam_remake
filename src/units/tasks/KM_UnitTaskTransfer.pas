@@ -1,4 +1,4 @@
-unit KM_UnitTaskTransfer;
+﻿unit KM_UnitTaskTransfer;
 {$I KaM_Remake.inc}
 interface
 uses
@@ -17,8 +17,8 @@ type
 
   TKMTaskTransfer = class(TKMUnitTask)
   private
-    fFrom: TKMHouse; //A market
-    fTo: TKMHouse; //A storehouse
+    fFrom: TKMHouseMarket; //A market
+    fTo: TKMHouseStore; //A storehouse
     fWareType: TKMWareType;
     fWareAmount: Word;
     fTransferID: Integer;
@@ -27,8 +27,8 @@ type
     function GetTransferStage: TKMTransferStage;
     procedure SetFromHouse(aFromHouse: TKMHouseMarket);
     procedure SetToHouse(aToHouse: TKMHouseStore);
-    property FromHouse: TKMHouse read fFrom write SetFromHouse;
-    property ToHouse: TKMHouse read fTo write SetToHouse;
+    property FromHouse: TKMHouseMarket read fFrom write SetFromHouse;
+    property ToHouse: TKMHouseStore read fTo write SetToHouse;
   public
     //FIXME: Unit type
     constructor Create(aHorse: TKMUnit; aFrom: TKMHouseMarket; aTo: TKMHouseStore; Res: TKMWareType; Amount: Word; aID: Integer); overload;
@@ -67,8 +67,8 @@ begin
   if gLog.CanLogDelivery then
     gLog.LogDelivery('PackHorse ' + IntToStr(fUnit.UID) + ' created Transfer task ' + IntToStr(fTransferID));
 
-  FromHouse := aFrom.GetHousePointer; //Also will set fPointBelowFromHouse
-  ToHouse := aTo.GetHousePointer; //Also will set fPointBelowToHouse
+  FromHouse := TKMHouseMarket(aFrom.GetHousePointer); //Also will set fPointBelowFromHouse
+  ToHouse := TKMHouseStore(aTo.GetHousePointer); //Also will set fPointBelowToHouse
 
   fWareType   := Res;
   fWareAmount := Amount;
@@ -114,8 +114,8 @@ end;
 procedure TKMTaskTransfer.SyncLoad;
 begin
   inherited;
-  fFrom := gHands.GetHouseByUID(Cardinal(fFrom));
-  fTo   := gHands.GetHouseByUID(Cardinal(fTo));
+  fFrom := TKMHouseMarket(gHands.GetHouseByUID(Cardinal(fFrom)));
+  fTo   := TKMHouseStore(gHands.GetHouseByUID(Cardinal(fTo)));
 end;
 
 
@@ -140,8 +140,8 @@ begin
 //    end;
 //  end;
 
-  gHands.CleanUpHousePointer(fFrom);
-  gHands.CleanUpHousePointer(fTo);
+  gHands.CleanUpHousePointer(TKMHouse(fFrom));
+  gHands.CleanUpHousePointer(TKMHouse(fTo));
   inherited;
 end;
 
@@ -273,16 +273,17 @@ begin
     0:  begin
           SetActionLockedStay(5,uaWalk); //Wait a moment inside
 
-          //Serf is inside house now.
-          //Barracks can consume the resource (by equipping) before we arrive
-          //All houses can have resources taken away by script at any moment
-          if (not fFrom.ResOutputAvailable(fWareType, fWareAmount)) //No resources
-              or (fFrom.GetDeliveryModeForCheck(true) = dmTakeOut) //Or evacuation mode
-          then
-          begin
-            fPhase := 99; //Job done
-            Exit;
-          end;
+          //FIXME: Immediately abandon when?
+          ////Serf is inside house now.
+          ////Barracks can consume the resource (by equipping) before we arrive
+          ////All houses can have resources taken away by script at any moment
+          //if (not fFrom.ResOutputAvailable(fWareType, fWareAmount)) //No resources
+          //    or (fFrom.GetDeliveryModeForCheck(true) = dmTakeOut) //Or evacuation mode
+          //then
+          //begin
+          //  fPhase := 99; //Job done
+          //  Exit;
+          //end;
           //TODO: logistics for transfer?
 //          gHands[Owner].Transferies.Queue.TakenOffer(fTransferID);
         end;
