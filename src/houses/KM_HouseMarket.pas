@@ -377,7 +377,6 @@ end;
 
 procedure TKMHouseMarket.CreateHorseInside;
 var
-  I: Integer;
   U: TKMUnit;
 begin
   if fHorseCount = MAX_WARES_IN_HOUSE then Exit;
