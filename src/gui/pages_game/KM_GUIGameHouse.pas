@@ -45,6 +45,7 @@ type
     procedure House_MarketFill(aMarket: TKMHouseMarket);
     procedure House_MarketOrderClick(Sender: TObject; Shift: TShiftState);
     procedure House_MarketSelect(Sender: TObject; Shift: TShiftState);
+    procedure House_MarketTargetHighlight(Sender: TObject);
 
     procedure House_SchoolUnitChange(Sender: TObject; Shift: TShiftState);
     procedure House_SchoolUnitQueueClick(Sender: TObject; Shift: TShiftState);
@@ -80,12 +81,13 @@ type
       ResRow_Order: array [1..4] of TKMWareOrderRow; //3 bars is the maximum
       ResRow_Costs: array [1..4] of TKMCostsRow; //3 bars is the maximum
     Panel_HouseMarket: TKMPanel;
+      ResRow_Market_Horse: TKMWaresRow;
       Button_Market: array [0..STORE_RES_COUNT-1] of TKMButtonFlat;
       Shape_Market_From, Shape_Market_To: TKMShape;
       Label_Market_In, Label_Market_Out: TKMLabel;
       Button_Market_In, Button_Market_Out: TKMButtonFlat;
-      Button_Market_Add,Button_Market_Remove: TKMButton;
-      Label_Market_FromAmount,Label_Market_ToAmount: TKMLabel;
+      Button_Market_Add, Button_Market_Remove: TKMButton;
+      Label_Market_FromAmount, Label_Market_ToAmount: TKMLabel;
     Panel_HouseStore: TKMPanel;
       Button_Store: array [1..STORE_RES_COUNT] of TKMButtonFlat;
       Image_Store_NotAccept: array [1..STORE_RES_COUNT] of TKMImage;
@@ -245,9 +247,15 @@ var
 begin
   Panel_HouseMarket := TKMPanel.Create(Panel_House, 0, 76, TB_WIDTH, 266);
 
+  ResRow_Market_Horse := TKMWaresRow.Create(Panel_HouseMarket, 0, 21, TB_WIDTH);
+  ResRow_Market_Horse.RX := rxGui;
+  ResRow_Market_Horse.TexID := gRes.Wares[wtHorse].GUIIcon;
+  ResRow_Market_Horse.Caption := gRes.Wares[wtHorse].Title;
+  ResRow_Market_Horse.Hint := gRes.Wares[wtHorse].Title;
+
   for I := 0 to STORE_RES_COUNT - 1 do
   begin
-    Button_Market[I] := TKMButtonFlat.Create(Panel_HouseMarket, (I mod 6)*31, 12 + (I div 6) * MARKET_RES_HEIGHT, 26, 31, 0);
+    Button_Market[I] := TKMButtonFlat.Create(Panel_HouseMarket, (I mod 6)*31, 48 + (I div 6) * MARKET_RES_HEIGHT, 26, 31, 0);
     Button_Market[I].TexOffsetY := 1;
     Button_Market[I].TexID := gRes.Wares[StoreResType[I+1]].GUIIcon;
     Button_Market[I].Hint := gRes.Wares[StoreResType[I+1]].Title;
@@ -266,7 +274,7 @@ begin
   Shape_Market_To.Hitable := False;
   Shape_Market_To.Hide;
 
-  LineH := 12 + ((STORE_RES_COUNT - 1) div 6 + 1) * MARKET_RES_HEIGHT;
+  LineH := 48 + ((STORE_RES_COUNT - 1) div 6 + 1) * MARKET_RES_HEIGHT;
   Label_Market_In  := TKMLabel.Create(Panel_HouseMarket, 0,LineH,85,0,'',fntGrey,taLeft);
   Label_Market_Out := TKMLabel.Create(Panel_HouseMarket, TB_WIDTH - 85,LineH,85,0,'',fntGrey,taRight);
 
@@ -1394,6 +1402,8 @@ var
   R: TKMWareType;
   I, Tmp: Integer;
 begin
+  ResRow_Market_Horse.WareCount := aMarket.HorseCount;
+
   for I := 0 to STORE_RES_COUNT - 1 do
   begin
     R := TKMWareType(Button_Market[I].Tag);
@@ -1420,7 +1430,7 @@ begin
   if aMarket.ResFrom <> wtNone then
   begin
     Shape_Market_From.Left := ((Byte(aMarket.ResFrom)-1) mod 6) * 31;
-    Shape_Market_From.Top := 12 + ((Byte(aMarket.ResFrom)-1) div 6) * MARKET_RES_HEIGHT;
+    Shape_Market_From.Top := 48 + ((Byte(aMarket.ResFrom)-1) div 6) * MARKET_RES_HEIGHT;
     Label_Market_In.Caption := Format(gResTexts[TX_HOUSES_MARKET_FROM], [aMarket.RatioFrom]);
     Button_Market_In.TexID := gRes.Wares[aMarket.ResFrom].GUIIcon;
     Button_Market_In.Caption := IntToStr(aMarket.GetResTotal(aMarket.ResFrom));
@@ -1435,17 +1445,27 @@ begin
   if aMarket.ResTo <> wtNone then
   begin
     Shape_Market_To.Left := ((Byte(aMarket.ResTo)-1) mod 6) * 31;
-    Shape_Market_To.Top := 12 + ((Byte(aMarket.ResTo)-1) div 6) * MARKET_RES_HEIGHT;
+    Shape_Market_To.Top := 48 + ((Byte(aMarket.ResTo)-1) div 6) * MARKET_RES_HEIGHT;
     Label_Market_Out.Caption := Format(gResTexts[TX_HOUSES_MARKET_TO], [aMarket.RatioTo]);
-    Button_Market_Out.Caption := IntToStr(aMarket.GetResTotal(aMarket.ResTo));
     Button_Market_Out.TexID := gRes.Wares[aMarket.ResTo].GUIIcon;
-  end else begin
+    Button_Market_Out.Caption := IntToStr(aMarket.GetResTotal(aMarket.ResTo));
+  end
+  else if aMarket.TransferTo <> nil then
+  begin
+    Label_Market_Out.Caption := Format(gResTexts[TX_HOUSES_MARKET_TO], [0]);
+    Button_Market_Out.TexID := gRes.Houses[htStore].GUIIcon;
+    Button_Market_Out.FlagColor := gHands[aMarket.TransferTo.Owner].FlagColor;
+    Button_Market_Out.Clickable := True;
+    Button_Market_Out.OnClick := House_MarketTargetHighlight;
+    Button_Market_Out.Caption := '';
+  end
+  else begin
     Label_Market_Out.Caption := Format(gResTexts[TX_HOUSES_MARKET_TO], [0]);
     Button_Market_Out.TexID := gRes.Wares[wtNone].GUIIcon;
     Button_Market_Out.Caption := '-';
   end;
 
-  Button_Market_Remove.Enabled := (aMarket.ResFrom <> wtNone) and (aMarket.ResTo <> wtNone);
+  Button_Market_Remove.Enabled := (aMarket.ResFrom <> wtNone) and ((aMarket.ResTo <> wtNone) or (aMarket.TransferTo <> nil));
   Button_Market_Add.Enabled := Button_Market_Remove.Enabled;
   Label_Market_FromAmount.Caption := IntToStr(aMarket.RatioFrom * aMarket.ResOrder[1]);
   Label_Market_ToAmount.Caption := IntToStr(aMarket.RatioTo * aMarket.ResOrder[1]);
@@ -1481,6 +1501,24 @@ begin
     gGame.GameInputProcess.CmdHouse(gicHouseMarketTo, M, TKMWareType(TKMButtonFlat(Sender).Tag));
 
   House_MarketFill(M); //Update costs and order count
+end;
+
+
+procedure TKMGUIGameHouse.House_MarketTargetHighlight(Sender: TObject);
+var
+  H: TKMHouseStore;
+begin
+  if not (gMySpectator.Selected is TKMHouseMarket) then Exit;
+
+  H := TKMHouseMarket(gMySpectator.Selected).TransferTo;
+  if (H <> nil) and (not H.IsDestroyed) then
+  begin
+    if Assigned(fSetViewportEvent) then
+    begin
+      gMySpectator.Highlight := H;
+      fSetViewportEvent(KMPointF(H.Entrance));
+    end;
+  end;
 end;
 
 

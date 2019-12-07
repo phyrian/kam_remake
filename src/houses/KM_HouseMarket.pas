@@ -4,13 +4,13 @@ interface
 uses
   KM_Houses,
   KM_ResWares, KM_ResHouses,
-  KM_CommonClasses, KM_Defaults;
+  KM_CommonClasses, KM_Defaults, KM_Points;
 
 type
-  TKMTradeKind = (tkUnknown, tkExchange, tkTransfer); //FIXME: Use or not?
+  TKMTradeKind = (tkUnknown, tkUnset, tkExchange, tkTransfer);
 
   //Marketplace
-  TKMHouseMarket = class(TKMHouse)
+  TKMHouseMarket = class(TKMHouseWFlagPoint)
   private
     fResFrom, fResTo: TKMWareType;
     fTransferTo: TKMHouseStore;
@@ -20,18 +20,20 @@ type
     fHorses: array [1..MAX_WARES_IN_HOUSE] of Pointer;
     fHorseCount: Byte;
     fTradeAmount: Word;
-    fTradeKind: TKMTradeKind;
     procedure AttemptExchange;
     procedure SetResFrom(aRes: TKMWareType);
     procedure SetResTo(aRes: TKMWareType);
     procedure SetTransferTo(aStore: TKMHouseStore);
 
+    function GetTradeKind: TKMTradeKind;
     function GetMarkerResToTrade(aWare: TKMWareType): Word;
     procedure SetMarkerResToTrade(aWare: TKMWareType; aCnt: Word);
     property MarkerResToTrade[aWare: TKMWareType]: Word read GetMarkerResToTrade write SetMarkerResToTrade;
     function GetAvailableHorse: Pointer;
     property AvailableHorse: Pointer read GetAvailableHorse;
   protected
+    procedure SyncLoad(); override;
+    function GetFlagPointTexId: Word; override;
     function GetResOrder(aId: Byte): Integer; override;
     procedure SetResOrder(aId: Byte; aValue: Integer); override;
     procedure CheckTakeOutDeliveryMode; override;
@@ -40,6 +42,7 @@ type
     constructor Load(LoadStream: TKMemoryStream); override;
 
     procedure DemolishHouse(aFrom: TKMHandID; IsSilent: Boolean = False); override;
+    property HorseCount: Byte read fHorseCount;
     property ResFrom: TKMWareType read fResFrom write SetResFrom;
     property ResTo: TKMWareType read fResTo write SetResTo;
     function RatioFrom: Byte;
@@ -50,7 +53,7 @@ type
 
     function AllowedToTrade(aRes: TKMWareType): Boolean;
     function TradeInProgress: Boolean;
-    property TradeKind: TKMTradeKind read fTradeKind;
+    property TradeKind: TKMTradeKind read GetTradeKind;
     property TransferTo: TKMHouseStore read fTransferTo write SetTransferTo;
     function GetResTotal(aWare: TKMWareType): Word; overload;
     function CheckResIn(aWare: TKMWareType): Word; override;
@@ -89,14 +92,35 @@ end;
 procedure TKMHouseMarket.DemolishHouse(aFrom: TKMHandID; IsSilent: Boolean = False);
 var
   R: TKMWareType;
+  I: Integer;
 begin
   //Count resources as lost
   for R := WARE_MIN to WARE_MAX do
     gHands[fOwner].Stats.WareConsumed(R, fMarketResIn[R] + fMarketResOut[R]);
 
-  //TODO: Horses inside should disappear (without statistics impact!)
+  //Horses inside should disappear without unit statistics impact
+  gHands[fOwner].Stats.WareConsumed(wtHorse, fHorseCount);
+  for I := 1 to fHorseCount do
+  begin
+    TKMUnit(fHorses[I]).Kill(Owner, False, False);
+    gHands.CleanUpUnitPointer(TKMUnit(fHorses[I]));
+  end;
+
+  gHands.CleanUpHousePointer(TKMHouse(fTransferTo));
 
   inherited;
+end;
+
+
+function TKMHouseMarket.GetTradeKind: TKMTradeKind;
+begin
+  if (fResTo <> wtNone) and (fTransferTo <> nil) then
+    Result := tkUnknown
+  else if (fResTo <> wtNone) then
+    Result := tkExchange
+  else if (fTransferTo <> nil) then
+    Result := tkTransfer
+  else Result := tkUnset;
 end;
 
 
@@ -121,6 +145,12 @@ end;
 function TKMHouseMarket.GetResOrder(aID: Byte): Integer;
 begin
   Result := fTradeAmount;
+end;
+
+
+function TKMHouseMarket.GetFlagPointTexId: Word;
+begin
+  Result := 249;
 end;
 
 
@@ -316,6 +346,7 @@ begin
 
   fResTo := aRes;
   fTransferTo := nil;
+  FlagPoint := PointBelowEntrance;
   if fResFrom = fResTo then
     fResFrom := wtNone;
 end;
@@ -328,6 +359,7 @@ begin
 
   fResTo := wtNone;
   fTransferTo := aStore;
+  FlagPoint := aStore.PointBelowEntrance;
 end;
 
 
@@ -408,10 +440,7 @@ var
   ResRequired, OrdersAllowed, OrdersRemoved: Integer;
 begin
   //FIXME: Remove
-  //The next three lines are hardcoding that the next exchange will be a transfer to one of the next player's storehouse
   CreateHorseInside;
-  Inc(fMarketResIn[wtHorse]); //Just to see how many "horse" we have in action
-  TransferTo := TKMHouseStore(gHands[Owner + 1].FindHouse(htStore));
 
   if (fResFrom = wtNone) or ((fResTo = wtNone) and (fTransferTo = nil)) or (fResFrom = fResTo) then Exit;
 
@@ -480,7 +509,7 @@ begin
 end;
 
 
-//TODO: New props
+
 constructor TKMHouseMarket.Load(LoadStream: TKMemoryStream);
 begin
   inherited;
@@ -491,10 +520,13 @@ begin
   LoadStream.Read(fMarketResIn, SizeOf(fMarketResIn));
   LoadStream.Read(fMarketResOut, SizeOf(fMarketResOut));
   LoadStream.Read(fMarketDeliveryCount, SizeOf(fMarketDeliveryCount));
+  LoadStream.Read(fHorses, SizeOf(fHorses));
+  LoadStream.Read(fHorseCount, SizeOf(fHorseCount));
+  LoadStream.Read(fTransferTo, 4);
 end;
 
 
-//TODO: New props
+
 procedure TKMHouseMarket.Save(SaveStream: TKMemoryStream);
 begin
   inherited;
@@ -505,6 +537,23 @@ begin
   SaveStream.Write(fMarketResIn, SizeOf(fMarketResIn));
   SaveStream.Write(fMarketResOut, SizeOf(fMarketResOut));
   SaveStream.Write(fMarketDeliveryCount, SizeOf(fMarketDeliveryCount));
+  SaveStream.Write(fHorses, SizeOf(fHorses));
+  SaveStream.Write(fHorseCount, SizeOf(fHorseCount));
+  if fTransferTo <> nil then
+    SaveStream.Write(fTransferTo.UID) //Store ID, then substitute it with reference on SyncLoad
+  else
+    SaveStream.Write(Integer(0));
+end;
+
+
+
+procedure TKMHouseMarket.SyncLoad();
+var
+  I: Integer;
+begin
+  fTransferTo := TKMHouseStore(gHands.GetHouseByUID(Cardinal(fTransferTo)));
+  for I := 1 to fHorseCount do
+    fHorses[I] := gHands.GetUnitByUID(Cardinal(fHorses[I]));
 end;
 
 

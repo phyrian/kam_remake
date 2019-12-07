@@ -299,6 +299,7 @@ begin
     5:  begin
           fTo.ResAddToIn(fWareType, fWareAmount);
 //          CarryTake;
+          gHands[fTo.Owner].Stats.WareProduced(fWareType, fWareAmount);
 
           //The transfer was successful, but we still have to get back
           //TODO: logistics for transfer?

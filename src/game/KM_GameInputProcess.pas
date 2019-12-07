@@ -85,6 +85,7 @@ type
     gicHouseTownHallMaxGold,         //Set TownHall MaxGold value
     gicHouseRemoveTrain,             //Remove unit being trained from School
     gicHouseWoodcuttersCutting,      //Set the cutting point for the Woodcutters
+    gicHouseMarketRally,             //Set the Transfer target for the Market
 
     //V.     Delivery ratios changes (and other game-global settings)
     gicWareDistributionChange,   //Change of distribution for 1 ware
@@ -228,6 +229,7 @@ const
     gicpt_Int2,     // gicHouseTownHallMaxGold
     gicpt_Int2,     // gicHouseRemoveTrain
     gicpt_Int3,     // gicHouseWoodcuttersCutting
+    gicpt_Int2,     // gicHouseMarketRally
     //V.     Delivery ratios changes (and other game-global settings)
     gicpt_Int3,     // gicWareDistributionChange
     gicpt_UniStr1,  // gicWareDistributions
@@ -324,6 +326,7 @@ type
     procedure CmdHouse(aCommandType: TKMGameInputCommandType; aHouse: TKMHouse; aUnitType: TKMUnitType; aCount: Integer); overload;
     procedure CmdHouse(aCommandType: TKMGameInputCommandType; aHouse: TKMHouse; aValue: Integer); overload;
     procedure CmdHouse(aCommandType: TKMGameInputCommandType; aHouse: TKMHouse; const aLoc: TKMPoint); overload;
+    procedure CmdHouse(aCommandType: TKMGameInputCommandType; aHouse: TKMHouse; aOther: TKMHouse); overload;
 
     procedure CmdWareDistribution(aCommandType: TKMGameInputCommandType; aWare: TKMWareType; aHouseType: TKMHouseType; aValue:integer); overload;
     procedure CmdWareDistribution(aCommandType: TKMGameInputCommandType; const aTextParam: UnicodeString); overload;
@@ -667,14 +670,14 @@ begin
       gicHouseStoreNotAcceptFlag, gicHStoreNotAllowTakeOutFlag, gicHouseBarracksAcceptFlag, gicHBarracksNotAllowTakeOutFlag,
       gicHouseBarracksEquip, gicHouseTownHallEquip, gicHouseClosedForWorkerTgl,
       gicHouseSchoolTrain, gicHouseSchoolTrainChOrder, gicHouseSchoolTrainChLastUOrder, gicHouseRemoveTrain,
-      gicHouseWoodcutterMode, gicHBarracksAcceptRecruitsTgl, gicHouseArmorWSDeliveryToggle] then
+      gicHouseWoodcutterMode, gicHouseMarketRally, gicHBarracksAcceptRecruitsTgl, gicHouseArmorWSDeliveryToggle] then
     begin
       SrcHouse := gHands.GetHouseByUID(Params[1]);
       if (SrcHouse = nil) or SrcHouse.IsDestroyed //House has been destroyed before command could be executed
       or (SrcHouse.Owner <> aCommand.HandIndex) then //Potential exploit
         Exit;
     end;
-    if CommandType in [gicArmyAttackHouse] then
+    if CommandType in [gicArmyAttackHouse, gicHouseMarketRally] then
     begin
       TgtHouse := gHands.GetHouseByUID(Params[2]);
       if (TgtHouse = nil) or TgtHouse.IsDestroyed then Exit; //House has been destroyed before command could be executed
@@ -754,6 +757,7 @@ begin
       gicHouseSchoolTrainChLastUOrder: TKMHouseSchool(SrcHouse).ChangeUnitTrainOrder(Params[2]);
       gicHouseRemoveTrain:       TKMHouseSchool(SrcHouse).RemUnitFromQueue(Params[2]);
       gicHouseWoodcuttersCutting: TKMHouseWoodcutters(SrcHouse).FlagPoint := KMPoint(Params[2], Params[3]);
+      gicHouseMarketRally:        TKMHouseMarket(SrcHouse).TransferTo := TKMHouseStore(TgtHouse);
       gicHouseArmorWSDeliveryToggle:   TKMHouseArmorWorkshop(SrcHouse).ToggleResDelivery(TKMWareType(Params[2]));
 
       gicWareDistributionChange:  begin
@@ -993,6 +997,15 @@ begin
   Assert((aCommandType = gicHouseBarracksRally) or (aCommandType = gicHouseTownHallRally) or (aCommandType = gicHouseWoodcuttersCutting));
   Assert((aHouse is TKMHouseBarracks) or (aHouse is TKMHouseTownHall) or (aHouse is TKMHouseWoodcutters));
   TakeCommand(MakeCommand(aCommandType, aHouse.UID, aLoc.X, aLoc.Y));
+end;
+
+
+procedure TKMGameInputProcess.CmdHouse(aCommandType: TKMGameInputCommandType; aHouse: TKMHouse; aOther: TKMHouse);
+begin
+  Assert(aCommandType = gicHouseMarketRally);
+  Assert(aHouse is TKMHouseMarket);
+  Assert(aOther is TKMHouseStore);
+  TakeCommand(MakeCommand(aCommandType, aHouse.UID, aOther.UID));
 end;
 
 

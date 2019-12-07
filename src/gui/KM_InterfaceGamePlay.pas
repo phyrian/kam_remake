@@ -352,7 +352,7 @@ uses
   KM_Utils, KM_ScriptingEvents,
   KM_CommonUtils, KM_ResLocales, KM_ResSound, KM_Resource, KM_Log, KM_ResCursors, KM_ResFonts, KM_ResKeys,
   KM_ResSprites, KM_ResUnits, KM_ResWares, KM_FogOfWar, KM_Sound, KM_NetPlayersList, KM_MessageLog, KM_NetworkTypes,
-  KM_InterfaceMapEditor, KM_HouseWoodcutters,
+  KM_InterfaceMapEditor, KM_HouseWoodcutters, KM_HouseMarket,
   KM_GameTypes;
 
 const
@@ -3884,10 +3884,18 @@ begin
         if not fPlacingBeacon
           and ((gMySpectator.Selected is TKMHouseBarracks)
             or (gMySpectator.Selected is TKMHouseTownHall)
-            or (gMySpectator.Selected is TKMHouseWoodcutters))
+            or (gMySpectator.Selected is TKMHouseWoodcutters)
+            or (gMySpectator.Selected is TKMHouseMarket))
           and (fUIMode in [umSP, umMP])
           and not HasLostMPGame then
         begin
+          if gMySpectator.Selected is TKMHouseMarket then
+          begin
+            H := gHands.HousesHitTest(gGameCursor.Cell.X, gGameCursor.Cell.Y);
+            if (H <> nil) and (H is TKMHouseStore) then
+              P := H.PointBelowEntrance;
+          end;
+
           if gTerrain.Route_CanBeMade(TKMHouse(gMySpectator.Selected).PointBelowEntrance, P, tpWalk, 0) then
           begin
             if gMySpectator.Selected is TKMHouseBarracks then
@@ -3896,8 +3904,13 @@ begin
             if gMySpectator.Selected is TKMHouseTownHall then
               gGame.GameInputProcess.CmdHouse(gicHouseTownHallRally, TKMHouse(gMySpectator.Selected), P)
             else
-              if gMySpectator.Selected is TKMHouseWoodcutters then
-                gGame.GameInputProcess.CmdHouse(gicHouseWoodcuttersCutting, TKMHouse(gMySpectator.Selected), P);
+            if gMySpectator.Selected is TKMHouseWoodcutters then
+              gGame.GameInputProcess.CmdHouse(gicHouseWoodcuttersCutting, TKMHouse(gMySpectator.Selected), P)
+            else
+              if (gMySpectator.Selected is TKMHouseMarket) then
+                if (H <> nil) and (H is TKMHouseStore) then
+                  gGame.GameInputProcess.CmdHouse(gicHouseMarketRally, TKMHouse(gMySpectator.Selected), H)
+                else gSoundPlayer.Play(sfxCantPlace, P, False, 4); //to indicate problem
           end
           else
             gSoundPlayer.Play(sfxCantPlace, P, False, 4);

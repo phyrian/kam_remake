@@ -146,7 +146,7 @@ implementation
 uses
   KM_RenderAux, KM_HandsCollection, KM_Game, KM_GameApp, KM_Sound, KM_Resource, KM_ResUnits,
   KM_ResMapElements, KM_AIFields, KM_TerrainPainter, KM_GameCursor,
-  KM_HouseBarracks, KM_HouseTownHall, KM_HouseWoodcutters,
+  KM_HouseBarracks, KM_HouseTownHall, KM_HouseWoodcutters, KM_HouseMarket,
   KM_FogOfWar, KM_Hand, KM_UnitGroup, KM_UnitWarrior, KM_CommonUtils,
   KM_GameTypes, KM_Utils, KM_ResTileset;
 
@@ -435,6 +435,7 @@ var
 begin
   if not (gMySpectator.Selected is TKMHouseBarracks) and
      not (gMySpectator.Selected is TKMHouseTownHall) and
+     not (gMySpectator.Selected is TKMHouseMarket) and
      not (gMySpectator.Selected is TKMHouseWoodcutters) then
     Exit;
 
