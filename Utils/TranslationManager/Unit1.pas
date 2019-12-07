@@ -52,6 +52,7 @@ type
     Label3: TLabel;
     edLabelId: TEdit;
     SaveHotKey: THotKey;
+    mmSaveSelZIP: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure ListBox1Click(Sender: TObject);
     procedure btnSortByIndexClick(Sender: TObject);
@@ -78,6 +79,7 @@ type
     procedure clbFoldersClickCheck(Sender: TObject);
     procedure mmSaveAllZIPClick(Sender: TObject);
     procedure ListBox1KeyPress(Sender: TObject; var Key: Char);
+    procedure mmSaveSelZIPClick(Sender: TObject);
   private
     fPathManager: TPathManager;
     fTextManager: TTextManager;
@@ -563,6 +565,36 @@ begin
       S := Format(ExportPathManager[I], [gResLocales[K].Code]);
       if FileExists(fWorkDir + S) then
         MyZip.AddFile(fWorkDir + S, ExtractFilePath(S));
+    end;
+
+  MyZip.SaveToFile(sdExportZIP.FileName);
+  MyZip.Free;
+  ExportPathManager.Free;
+end;
+
+//Saves only the selected languages to a ZIP
+procedure TForm1.mmSaveSelZIPClick(Sender: TObject);
+var
+  ExportPathManager: TPathManager;
+  I, K: Integer;
+  MyZip: TZippit;
+  S: string;
+begin
+  if not sdExportZIP.Execute(Handle) then Exit;
+
+  ExportPathManager := TPathManager.Create;
+  ExportPathManager.AddPath(fWorkDir, '');
+
+  MyZip := TZippit.Create;
+  for I:=0 to ExportPathManager.Count-1 do
+    for K := 0 to gResLocales.Count - 1 do
+    begin
+      if clbShowLang.Checked[K+1] then
+      begin
+        S := Format(ExportPathManager[I], [gResLocales[K].Code]);
+        if FileExists(fWorkDir + S) then
+          MyZip.AddFile(fWorkDir + S, ExtractFilePath(S));
+      end;
     end;
 
   MyZip.SaveToFile(sdExportZIP.FileName);
