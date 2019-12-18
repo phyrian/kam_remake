@@ -352,6 +352,9 @@ begin
   if SHOW_TERRAIN_KINDS then
     gRenderAux.TileTerrainKinds(aRect);
 
+  if SHOW_JAM_METER then
+    gRenderAux.TileTerrainJamMeter(aRect);
+
   if SHOW_TERRAIN_TILES_GRID then
     RenderTilesGrid(aRect);
 

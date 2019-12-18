@@ -111,6 +111,15 @@ type
     procedure Execute(aRun: Integer); override;
   end;
 
+  TKMRunnerPushModes = class(TKMRunnerCommon)
+  private
+    fBestScore, fWorstScore, fAverageScore: Double;
+  protected
+    procedure SetUp(); override;
+    procedure TearDown(); override;
+    procedure Execute(aRun: Integer); override;
+  end;
+
   TKMRunnerStone = class(TKMRunnerCommon)
   protected
     procedure SetUp; override;
@@ -643,8 +652,84 @@ begin
         gGameApp.Game.Save(Format('B__%s__No_%.3d__Score_%.6d',[MapName, L, Round(Score)]), Now);
       end;
     end;
-    fAverageScore := fAverageScore / Double(cnt_MAP_SIMULATIONS);
+    fAverageScore := fAverageScore / cnt_MAP_SIMULATIONS;
     gGameApp.Game.Save(Format('AVRG_%s__%.6d',[MapName, Round(fAverageScore)]), Now);
+  end;
+
+  gGameApp.StopGame(grSilent);
+end;
+
+
+procedure TKMRunnerPushModes.SetUp();
+begin
+  inherited;
+
+  // Deactivate KaM log
+  if (gLog = nil) then
+    gLog := TKMLog.Create(Format('%s\Utils\Runner\Runner_Log.log',[ExeDir]));
+  gLog.MessageTypes := [];
+end;
+
+
+procedure TKMRunnerPushModes.TearDown();
+begin
+  inherited;
+end;
+
+
+procedure TKMRunnerPushModes.Execute(aRun: Integer);
+const
+  // Maps for simulation (I dont use for loop in this array)
+  //MAPS: array [1..27] of String = ('GA_S1_001','GA_S1_002','GA_S1_003','GA_S1_004','GA_S1_005','GA_S1_006','GA_S1_007','GA_S1_008','GA_S1_009','GA_S1_010','GA_S1_011','GA_S1_012','GA_S1_013','GA_S1_014','GA_S1_015','GA_S1_016','GA_S1_017','GA_S1_018','GA_S1_019','GA_S1_020','GA_S1_021','GA_S1_022','GA_S1_023','GA_S1_024','GA_S1_025','GA_S1_026','GA_S1_027');
+  MAPS: array [1..13] of String = ('Test1','Test2','Test3','Test4','Test5','Test6','Test7','Test8','Test9','Test10','Test11','Test12',
+                                   'Test13');
+  MAPS_V: array [1..13] of Integer = (10, 10, 10, 20, 20, 20, 10, 10, 10, 10, 10, 10,
+                                      120);
+  cnt_MAP_SIMULATIONS = 100;
+var
+  K,L: Integer;
+  Score: Double;
+  MapName: String;
+begin
+  for K := 1 to 13 do//High(MAPS) do
+  begin
+    fBestScore := -1e30;
+    fAverageScore := 0;
+    fWorstScore := 1e30;
+    MapName := MAPS[K];
+    fIntParam := 0;
+    fIntParam2 := 0;
+    if K <= 12 then
+      fIntParam := MAPS_V[K]
+    else
+      fIntParam2 := MAPS_V[K];
+    for L := 1 to cnt_MAP_SIMULATIONS do
+    begin
+      gGameApp.NewSingleMap(Format('%s..\..\Maps\%s\%s.dat',[ExtractFilePath(ParamStr(0)),MapName,MapName]), MapName);
+
+      SetKaMSeed(Max(1,L));
+
+      SimulateGame();
+      Score := gGameApp.Game.GameTick;//Max(0,EvalGame());
+      fAverageScore := fAverageScore + Score;
+      //gGameApp.Game.Save(Format('%s__No_%.3d__Score_%.6d',[MapName, K, Round(Score)]), Now);
+      if (Score < fWorstScore) AND (cnt_MAP_SIMULATIONS > 1) then
+      begin
+        fWorstScore := Score;
+//        gGameApp.Game.Save(Format('W__%s__No_%.3d__Score_%.6d',[MapName, L, Round(Score)]), Now);
+      end;
+      if (Score > fBestScore) AND (cnt_MAP_SIMULATIONS > 1) then
+      begin
+        fBestScore := Score;
+//        gGameApp.Game.Save(Format('B__%s__No_%.3d__Score_%.6d',[MapName, L, Round(Score)]), Now);
+      end;
+      OnProgress2(MapName + ' Run ' + IntToStr(L));
+    end;
+    fAverageScore := fAverageScore / cnt_MAP_SIMULATIONS;
+//    gGameApp.Game.Save(Format('AVRG_%s__%.6d',[MapName, Round(fAverageScore)]), Now);
+    gLog.SetDefaultMessageTypes;
+    gLog.AddNoTime(Format('%d;%d;%d', [{MAPS[K], }Round(fAverageScore), Round(fWorstScore), Round(fBestScore)]), False);
+    gLog.MessageTypes := [];
   end;
 
   gGameApp.StopGame(grSilent);
@@ -1050,6 +1135,7 @@ end;
 
 
 initialization
+  RegisterRunner(TKMRunnerPushModes);
   RegisterRunner(TKMRunnerGA_TestParRun);
   RegisterRunner(TKMRunnerGA_HandLogistics);
   RegisterRunner(TKMRunnerGA_Manager);

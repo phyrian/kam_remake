@@ -1629,53 +1629,64 @@ end;
 
 
 procedure TKMCityBuilder.LogStatus(var aBalanceText: UnicodeString);
+const
+  COLOR_WHITE = '[$FFFFFF]';
+  COLOR_RED = '[$0000FF]';
+  COLOR_YELLOW = '[$00FFFF]';
+  COLOR_GREEN = '[$00FF00]';
 var
-  I, cnt: Integer;
+  K, cnt, Reservation, RemoveTrees, PlanPlaced, Construction: Integer;
   HT: TKMHouseType;
+  Text: String;
 begin
+  // Construction
   aBalanceText := aBalanceText + '|Construction: ';
-  cnt := 0;
+  cnt := 1;
   for HT := Low(fPlanner.PlannedHouses) to High(fPlanner.PlannedHouses) do
-    for I := 0 to fPlanner.PlannedHouses[HT].Count - 1 do
-      with fPlanner.PlannedHouses[HT].Plans[I] do
+  begin
+    Reservation := 0;
+    RemoveTrees := 0;
+    PlanPlaced := 0;
+    Construction := 0;
+    for K := 0 to fPlanner.PlannedHouses[HT].Count - 1 do
+      with fPlanner.PlannedHouses[HT].Plans[K] do
       begin
         if not Placed then
         begin
-          if HouseReservation then
-            aBalanceText := aBalanceText + gRes.Houses[HT].HouseName + ' (Reservation), '
-          else if RemoveTreeInPlanProcedure then
-            aBalanceText := aBalanceText + gRes.Houses[HT].HouseName + ' (Remove trees), '
-          else
-            aBalanceText := aBalanceText + gRes.Houses[HT].HouseName + ' (Plan placed), ';
-          cnt := cnt + 1;
+          Inc(Reservation, Byte(HouseReservation));
+          Inc(Reservation, Byte(RemoveTreeInPlanProcedure));
+          Inc(Reservation, Byte(not HouseReservation AND not RemoveTreeInPlanProcedure));
         end
         else if (House <> nil) AND not (House.IsComplete) then
-        begin
-          aBalanceText := aBalanceText + gRes.Houses[HT].HouseName + ' (Construction), ';
-          cnt := cnt + 1;
-        end;
-        if (cnt > 5) then
-        begin
-          cnt := 0;
-          aBalanceText := aBalanceText + '|';
-        end;
+          Inc(Construction,1);
       end;
-
-
+    if ((Reservation + RemoveTrees + PlanPlaced + Construction) > 0) then
+    begin
+      Cnt := (Cnt + 1) mod 6;
+      if (Cnt = 0) then
+        aBalanceText := aBalanceText + '|';
+      Text := '';
+      if (Reservation  > 0) then Text := Format('%s%dx Reservation ' ,[Text, Reservation]);
+      if (RemoveTrees  > 0) then Text := Format('%s%dx RemoveTrees ' ,[Text, RemoveTrees]);
+      if (PlanPlaced   > 0) then Text := Format('%s%dx PlanPlaced '  ,[Text, PlanPlaced]);
+      if (Construction > 0) then Text := Format('%s%dx Construction ',[Text, Construction]);
+      aBalanceText := Format( '%s %s (%s),', [aBalanceText, gRes.Houses[HT].HouseName, Text.SubString(0,Length(Text)-1)] );
+    end;
+  end;
+  // Active nodes
   cnt := 0;
-  for I := Low(fBuildNodes) to High(fBuildNodes) do
-    if fBuildNodes[I].Active then
-      cnt := cnt + 1;
-  aBalanceText := aBalanceText + '|Active nodes:' + IntToStr(cnt);
-  if fStoneShortage then
-    aBalanceText := aBalanceText + '|Stone shortage';
-  if fTrunkShortage then
-    aBalanceText := aBalanceText + '|Trunk shortage';
-  if fWoodShortage then
-    aBalanceText := aBalanceText + '|Wood shortage';
-  if fGoldShortage then
-    aBalanceText := aBalanceText + '|Gold shortage';
-
+  for K := Low(fBuildNodes) to High(fBuildNodes) do
+    Inc(cnt, Byte(fBuildNodes[K].Active));
+  aBalanceText := Format('%s|Active nodes: %d',[aBalanceText,cnt]);
+  // Material shortage
+  Text := '';
+  if fStoneShortage then Text := Text + ' Stone,';
+  if fTrunkShortage then Text := Text + ' Trunk,';
+  if fWoodShortage  then Text := Text + ' Wood,';
+  if fGoldShortage  then Text := Text + ' Gold,';
+  if (Length(Text) > 0) then
+    aBalanceText := Format('%s|Shortage:%s%s[]',[aBalanceText,COLOR_RED,Text.SubString(0,Length(Text)-1)]);
+  // Planner
   fPlanner.LogStatus(aBalanceText);
 end;
 

@@ -37,8 +37,8 @@ type
 
     procedure AddLineTime(const aText: UnicodeString; aLogType: TKMLogMessageType; aDoCloseFile: Boolean = True); overload;
     procedure AddLineTime(const aText: UnicodeString; aFlushImmidiately: Boolean = True); overload;
-    procedure AddLineNoTime(const aText: UnicodeString; aDoCloseFile: Boolean = True); overload;
-    procedure AddLineNoTime(const aText: UnicodeString; aLogType: TKMLogMessageType; aDoCloseFile: Boolean = True); overload;
+    procedure AddLineNoTime(const aText: UnicodeString; aWithPrefix: Boolean = True; aDoCloseFile: Boolean = True); overload;
+    procedure AddLineNoTime(const aText: UnicodeString; aLogType: TKMLogMessageType; aWithPrefix: Boolean = True; aDoCloseFile: Boolean = True); overload;
   public
     MultithreadLogging: Boolean; // Enable thread safe mode (resource protection) while logging with multi threads
     MessageTypes: TKMLogMessageTypeSet;
@@ -70,10 +70,12 @@ type
     function CanLogNetPacketCommand: Boolean;
     function CanLogNetPacketPingFps: Boolean;
 
+    procedure SetDefaultMessageTypes;
+
     // Add line if TestValue=false
     procedure AddAssert(const aMessageText: UnicodeString);
     // AddToLog simply adds the text
-    procedure AddNoTime(const aText: UnicodeString);
+    procedure AddNoTime(const aText: UnicodeString; aWithPrefix: Boolean = True);
     procedure AddNoTimeNoFlush(const aText: UnicodeString);
     procedure DeleteOldLogs;
     property LogPath: UnicodeString read fLogPath; //Used by dedicated server
@@ -146,12 +148,18 @@ begin
   fLogPath := aPath;
   fFirstTick := TimeGet;
   fPreviousTick := TimeGet;
-  MessageTypes := DEFAULT_LOG_TYPES_TO_WRITE;
+  SetDefaultMessageTypes;
+
   if DEBUG_LOGS then
     Include(MessageTypes, lmtDebug);
 
   CS := TCriticalSection.Create;
   InitLog;
+end;
+
+procedure TKMLog.SetDefaultMessageTypes;
+begin
+  MessageTypes := DEFAULT_LOG_TYPES_TO_WRITE;
 end;
 
 
@@ -255,7 +263,8 @@ end;
 
 
 //Add line but without timestamp
-procedure TKMLog.AddLineNoTime(const aText: UnicodeString; aLogType: TKMLogMessageType; aDoCloseFile: Boolean = True);
+procedure TKMLog.AddLineNoTime(const aText: UnicodeString; aLogType: TKMLogMessageType; aWithPrefix: Boolean = True;
+                               aDoCloseFile: Boolean = True);
 begin
   if Self = nil then Exit;
 
@@ -272,7 +281,10 @@ begin
     Lock;
   try
     Append(fl);
-    WriteLn(fl, '                                      ' + aText);
+    if aWithPrefix then
+      WriteLn(fl, '                                      ' + aText)
+    else
+      WriteLn(fl, aText);
     if aDoCloseFile then
       CloseFile(fl);
   finally
@@ -286,9 +298,9 @@ end;
 
 
 //Add line without timestamp
-procedure TKMLog.AddLineNoTime(const aText: UnicodeString; aDoCloseFile: Boolean = True);
+procedure TKMLog.AddLineNoTime(const aText: UnicodeString; aWithPrefix: Boolean = True; aDoCloseFile: Boolean = True);
 begin
-  AddLineNoTime(aText, lmtDefault, aDoCloseFile);
+  AddLineNoTime(aText, lmtDefault, aWithPrefix, aDoCloseFile);
 end;
 
 
@@ -458,11 +470,11 @@ begin
 end;
 
 
-procedure TKMLog.AddNoTime(const aText: UnicodeString);
+procedure TKMLog.AddNoTime(const aText: UnicodeString; aWithPrefix: Boolean = True);
 begin
   if Self = nil then Exit;
 
-  AddLineNoTime(aText);
+  AddLineNoTime(aText, aWithPrefix);
 end;
 
 
@@ -471,7 +483,7 @@ procedure TKMLog.AddNoTimeNoFlush(const aText: UnicodeString);
 begin
   if Self = nil then Exit;
 
-  AddLineNoTime(aText, False);
+  AddLineNoTime(aText, True, False);
 end;
 
 

@@ -38,6 +38,7 @@ type
     function ShouldAbandonDeliveryFrom(aWareType: TKMWareType; aImmidiateCheck: Boolean = False): Boolean; override;
     function ShouldAbandonDeliveryFromTo(aToHouse: TKMHouse; aWareType: TKMWareType; aImmidiateCheck: Boolean): Boolean; override;
 
+    function GetTotalWaresCnt: Integer;
     function ResOutputAvailable(aRes: TKMWareType; const aCount: Word): Boolean; override;
     function CanEquip(aUnitType: TKMUnitType): Boolean;
     function RecruitsCount: Integer;
@@ -206,6 +207,16 @@ function TKMHouseBarracks.ResOutputAvailable(aRes: TKMWareType; const aCount: Wo
 begin
   Assert(aRes in [WARFARE_MIN .. WARFARE_MAX]);
   Result := (fResourceCount[aRes] >= aCount);
+end;
+
+
+function TKMHouseBarracks.GetTotalWaresCnt: Integer;
+var
+  W: TKMWareType;
+begin
+  Result := 0;
+  for W := WARFARE_MIN to WARFARE_MAX do
+    Inc(Result, fResourceCount[W]);
 end;
 
 

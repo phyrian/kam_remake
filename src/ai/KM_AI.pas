@@ -547,15 +547,16 @@ procedure TKMHandAI.PlaceFirstStorehouse(aLoc: TKMPoint);
     BestPrice := 1e10;
     for X := Max(1,aInitP.X-RAD) to Min(gTerrain.MapX-1,aInitP.X+RAD) do
     for Y := Max(1,aInitP.Y-RAD) to Min(gTerrain.MapY-1,aInitP.Y+RAD) do
-      if gHands[fOwner].CanAddHousePlanAI(X,Y,htStore,False) AND gHands[fOwner].CanAddFieldPlan(KMPoint(X,Y+1), ftRoad) then
+      if gHands[fOwner].CanAddFieldPlan(KMPoint(X,Y+1), ftRoad) AND gHands[fOwner].CanAddHousePlanAI(X,Y,htStore,False) then
       begin
         //gTerrain.ScriptTrySetTileObject(X, Y, 0); // Debug (visualization)
         Loc := KMPoint(X,Y);
         Price :=
-          Byte(bStone) * KMDistanceSqr(Loc, Stone)
-
-
-          ;
+          + 6 * Byte(bStone) * KMDistanceSqr(Loc, Stone)
+          + 50 * (Byte(gTerrain.TileIsCoal(X, Y) > 1) + Byte(gTerrain.TileIsCoal(X, Y-1) > 1) + Byte(gTerrain.TileIsCoal(X, Y-2) > 1))
+          + 2 * Byte(bGold) * KMDistanceSqr(Loc, Gold)
+          + 1 * Byte(bIron) * KMDistanceSqr(Loc, Iron)
+          - 20 * ( Byte(gHands[fOwner].CanAddFieldPlan(KMPoint(X,Y+2), ftRoad)) + Byte(gHands[fOwner].CanAddFieldPlan(KMPoint(X+1,Y+1), ftRoad)) + Byte(gHands[fOwner].CanAddFieldPlan(KMPoint(X-1,Y+1), ftRoad)) );
 
         if (Price < BestPrice) then
         begin
