@@ -615,7 +615,7 @@ procedure TKMCityPredictor.FilterRequiredHouses(aTick: Cardinal);
 
   procedure CheckPeaceFactor();
   const
-    MINES: set of TKMHouseType = [htCoalMine, htGoldMine, htIronMine, htQuary];
+    IGNORE_HOUSES: set of TKMHouseType = [htCoalMine, htGoldMine, htIronMine, htQuary, htWineyard];
   var
     Cnt: Integer;
     HT: TKMHouseType;
@@ -624,7 +624,7 @@ procedure TKMCityPredictor.FilterRequiredHouses(aTick: Cardinal);
     begin
       Cnt := 0;
       for HT := Low(RequiredHouses) to High(RequiredHouses) do
-        if not (HT in MINES) then
+        if not (HT in IGNORE_HOUSES) then
           Inc(Cnt, RequiredHouses[HT]);
       if (Cnt = 0) then
         UpdateFinalProduction(0.1);
@@ -746,7 +746,6 @@ begin
 
   // Filter required houses
   FilterRequiredHouses(aTick);
-  //
 end;
 
 
@@ -757,21 +756,13 @@ const
   COLOR_YELLOW = '[$00FFFF]';
   COLOR_GREEN = '[$00FF00]';
   WARE_TO_STRING: array[WARE_MIN..WARE_MAX] of UnicodeString = (
-    'Trunk       ', 'Stone       ',  'Wood        ', 'IronOre     ', 'GoldOre     ',
-    'Coal        ', 'Steel       ',  'Gold        ', 'Wine        ', 'Corn        ',
-    'Bread       ', 'Flour       ',  'Leather     ', 'Sausages  ',   'Pig         ',
-    'Skin        ', 'Shield      ',  'MetalShield ', 'Armor       ', 'MetalArmor  ',
-    'Axe         ', 'Sword       ',  'Pike        ', 'Hallebard   ', 'Bow         ',
-    'Arbalet     ', 'Horse       ',  'Fish        '
+    'Trunk'#9#9,   'Stone'#9#9,   'Wood'#9#9,        'Iron ore'#9#9,  'Gold ore'#9#9,
+    'Coal'#9#9#9,  'Steel'#9#9#9, 'Gold'#9#9#9,      'Wine'#9#9#9,    'Corn'#9#9#9,
+    'Bread'#9#9,   'Flour'#9#9#9, 'Leather'#9#9,     'Sausages'#9,    'Pig'#9#9#9,
+    'Skin'#9#9#9,  'Shield'#9#9,  'MetalShield'#9#9, 'Armor'#9#9,     'MetalArmor'#9#9,
+    'Axe'#9#9,     'Sword'#9#9,   'Pike'#9#9,        'Hallebard'#9#9, 'Bow'#9#9,
+    'Arbalet'#9#9, 'Horse'#9#9,   'Fish'#9#9#9
   );
-  //HOUSE_TO_STRING: array[HOUSE_MIN..HOUSE_MAX] of UnicodeString = (
-  //  'ArmorSmithy',     'ArmorWorkshop',   'Bakery',        'Barracks',      'Butchers',
-  //  'CoalMine',        'Farm',            'FisherHut',     'GoldMine',      'Inn',
-  //  'IronMine',        'IronSmithy',      'Marketplace',   'Metallurgists', 'Mill',
-  //  'Quary',           'Sawmill',         'School',        'SiegeWorkshop', 'Stables',
-  //  'Store',           'Swine',           'Tannery',       'TownHall',      'WatchTower',
-  //  'WeaponSmithy',    'WeaponWorkshop',  'Wineyard',      'Woodcutters'
-  //);
 
   procedure AddWare(aWT: TKMWareType; const aSpecificText: String);
   var
@@ -789,6 +780,7 @@ const
       FinalConsumptionColor := COLOR_YELLOW;
       FractionColor := COLOR_YELLOW;
       ExhaustionColor := COLOR_RED;
+
       if (Production > 0) then         ProductionColor := COLOR_GREEN;
       if (ActualConsumption > 0) then  ActualConsumptionColor := COLOR_RED;
       if (FinalConsumption > 0) then   FinalConsumptionColor := COLOR_RED;
@@ -796,27 +788,31 @@ const
       else                             FractionColor := COLOR_RED;
       if (Exhaustion > 10) then        ExhaustionColor := COLOR_GREEN
       else if (Exhaustion > 1) then    ExhaustionColor := COLOR_YELLOW;
-      aBalanceText := aBalanceText + Format(HouseCntColor+'%dx '+COLOR_WHITE, [Cnt]) //
-                        + Format(#9 + '%s ' + #9 + '('
-                          + ProductionColor+'%3.2f'+COLOR_WHITE+';' + #9
-                          + ActualConsumptionColor+'%3.2f'+COLOR_WHITE+';' + #9
-                          + FinalConsumptionColor+'%3.2f'+COLOR_WHITE+';'  + #9
-                          + FractionColor+'%3.2f'+COLOR_WHITE+';' + #9
-                          + ExhaustionColor+'%3.2f'+COLOR_WHITE+')|',
-                          [aSpecificText, Production, ActualConsumption, FinalConsumption, Fraction, Exhaustion]);
+
+      aBalanceText := Format('%s'#9'%s%dx %s%s'#9'%s%5.2f%s'#9#9#9#9'%s%5.2f%s'#9#9#9#9#9'%s%5.2f%s'#9#9#9'%s%5.2f%s'#9#9#9'%s%5.2f%s|',
+                       [                        aBalanceText,
+                        HouseCntColor,          Cnt,               COLOR_WHITE,
+                                                aSpecificText,
+                        ProductionColor,        Production,        COLOR_WHITE,
+                        ActualConsumptionColor, ActualConsumption, COLOR_WHITE,
+                        FinalConsumptionColor,  FinalConsumption,  COLOR_WHITE,
+                        FractionColor,          Fraction,          COLOR_WHITE,
+                        ExhaustionColor,        Exhaustion,        COLOR_WHITE
+                       ]
+                      );
     end;
   end;
 var
-  I: Integer;
+  K: Integer;
 begin
-  aBalanceText := aBalanceText + 'Ware balance|Required houses (ware type ->   production;   actual consumption;   final consumption;   fraction;   exhaustion):|';
-  for I := CO_WARE_MIN to CO_WARE_MAX do
-    AddWare(CONSUMPTION_ORDER[I], WARE_TO_STRING[ CONSUMPTION_ORDER[I] ]);
-  AddWare(wtArmor, 'Armor           ');
-  AddWare(wtAxe, 'Weapon       ');
-  AddWare(wtMetalArmor, 'Iron Armor   ');
-  AddWare(wtSword, 'Iron Weapon');
-  aBalanceText := aBalanceText + 'Max Workers: ' + IntToStr(fWorkerCount) + '|';
+  aBalanceText := Format('%sWare balance|Required houses'#9'Production'#9#9'Actual consumption'#9#9'Final consumption'#9#9'Fraction'#9'Exhaustion|',[aBalanceText]);
+  for K := CO_WARE_MIN to CO_WARE_MAX do
+    AddWare(CONSUMPTION_ORDER[K], WARE_TO_STRING[ CONSUMPTION_ORDER[K] ]);
+  AddWare(wtArmor, 'Armor'#9#9);
+  AddWare(wtAxe, 'Weapon'#9#9);
+  AddWare(wtMetalArmor, 'Iron Armor'#9);
+  AddWare(wtSword, 'Iron Weapon'#9);
+  aBalanceText := Format('%sPeace factor = %1.2f (update = %1.2f); Max workers: %d; Gold mines = %d; Iron mines = %d; Field coef = %d; Build coef = %d; |', [aBalanceText, fPeaceFactor, fUpdatedPeaceFactor, fWorkerCount, fGoldMineCnt, fIronMineCnt, fFieldCnt, fBuildCnt]);
 end;
 
 

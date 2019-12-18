@@ -31,6 +31,7 @@ type
     chkRender: TCheckBox;
     seDuration: TSpinEdit;
     Label4: TLabel;
+    Label5: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
@@ -44,6 +45,7 @@ type
     fRunTime: string;
     RenderArea: TKMRenderControl;
     procedure RunnerProgress(const aValue: UnicodeString);
+    procedure RunnerProgress2(const aValue: UnicodeString);
     procedure RefreshResults(aImg: TImage);
     procedure RefreshDistribution(aImg: TImage);
     procedure RefreshTimes(aImg: TImage);
@@ -85,6 +87,12 @@ begin
 
   for I := 0 to High(RunnerList) do
     ListBox1.Items.Append(RunnerList[I].ClassName);
+
+  if Length(RunnerList) > 0 then
+  begin
+    ListBox1.ItemIndex := 0;
+    Button1.Enabled := True
+  end;
 end;
 
 
@@ -146,6 +154,7 @@ begin
       Runner := RunnerClass.Create(nil);
 
     Runner.OnProgress := RunnerProgress;
+    Runner.OnProgress2 := RunnerProgress2;
     try
       T := GetTickCount;
       Runner.Duration := seDuration.Value;
@@ -338,6 +347,14 @@ procedure TForm2.RunnerProgress(const aValue: UnicodeString);
 begin
   Label2.Caption := aValue;
   Label2.Refresh;
+  Application.ProcessMessages;
+end;
+
+
+procedure TForm2.RunnerProgress2(const aValue: UnicodeString);
+begin
+  Label5.Caption := aValue;
+  Label5.Refresh;
   Application.ProcessMessages;
 end;
 

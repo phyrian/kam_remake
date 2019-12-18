@@ -1,4 +1,4 @@
-unit Unit_Runner;
+﻿unit Unit_Runner;
 {$I KaM_Remake.inc}
 interface
 uses
@@ -26,6 +26,8 @@ type
     fRenderTarget: TKMRenderControl;
     fRun: Integer;
     fResults: TKMRunResults;
+    fIntParam: Integer;
+    fIntParam2: Integer;
     procedure SetUp; virtual;
     procedure TearDown; virtual;
     procedure Execute(aRun: Integer); virtual; abstract;
@@ -34,6 +36,7 @@ type
   public
     Duration: Integer;
     OnProgress: TUnicodeStringEvent;
+    OnProgress2: TUnicodeStringEvent;
     constructor Create(aRenderTarget: TKMRenderControl); reintroduce;
     function Run(aCount: Integer): TKMRunResults;
   end;
@@ -44,6 +47,8 @@ var
   RunnerList: array of TKMRunnerClass;
 
 implementation
+uses
+  KM_HouseInn, KM_HouseBarracks, KM_HandsCollection;
 
 
 procedure RegisterRunner(aRunner: TKMRunnerClass);
@@ -59,6 +64,7 @@ begin
   inherited Create;
 
   fRenderTarget := aRenderTarget;
+  fIntParam := 0;
 end;
 
 
@@ -166,8 +172,30 @@ begin
 end;
 
 
+//procedure TKMRunnerCommon.FlashingStart;
+//{$IFNDEF FPC}
+//var
+//  flashInfo: TFlashWInfo;
+//{$ENDIF}
+//begin
+//  {$IFNDEF FPC}
+//  if (GetForeGroundWindow <> gMain.FormMain.Handle) then
+//  begin
+//    flashInfo.cbSize := 20;
+//    flashInfo.hwnd := Application.Handle;
+//    flashInfo.dwflags := FLASHW_ALL;
+//    flashInfo.ucount := 5;
+//    flashInfo.dwtimeout := 0;
+//    fFlashing := True;
+//    FlashWindowEx(flashInfo);
+//  end
+//  {$ENDIF}
+//end;
+
+
 procedure TKMRunnerCommon.SimulateGame;
-var I: Integer;
+var
+  I, IntParam, TestParam: Integer;
 begin
   for I := 0 to fResults.TimesCount - 1 do
   begin
@@ -175,6 +203,26 @@ begin
 
     gGameApp.Game.UpdateGame(nil);
     gGameApp.Render(False);
+    IntParam := -1;
+    TestParam := -1;
+
+    if (fIntParam <> 0) then
+    begin
+      IntParam := fIntParam;
+      TestParam := TKMHouseInn(gHands.HousesHitTest(24,32)).GetFoodCnt;
+    end
+    else
+    if (fIntParam2 <> 0) then
+    begin
+      IntParam := fIntParam2;
+      TestParam := TKMHouseBarracks(gHands.HousesHitTest(24,32)).GetTotalWaresCnt;
+    end;
+
+    if (IntParam <> -1) and (IntParam = TestParam) then
+    begin
+//      fResults.Value[fRun, 0] := gGameApp.Game.TickCount;
+      Exit;
+    end;
 
     fResults.Times[fRun, I] := TimeGet - fResults.Times[fRun, I];
 

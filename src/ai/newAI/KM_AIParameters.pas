@@ -20,7 +20,32 @@ var
 
 
 { KM_ArmyAttack }
-//{ 2019-12-14
+//{ 2019-12-15
+  GA_ATTACK_SQUAD_ChangeTarget_DistTolerance         : Single =     9.4665279388;
+  GA_ATTACK_SQUAD_ChangeTarget_Delay                 : Word =  957;
+  GA_ATTACK_SQUAD_TargetReached_Position             : Word =    8;
+  GA_ATTACK_SQUAD_TargetReached_Unit                 : Word =   12;
+  GA_ATTACK_SQUAD_TargetReached_House                : Word =    8;
+  GA_ATTACK_SQUAD_TargetReached_RangedSquad          : Word =   15;
+  GA_ATTACK_SQUAD_MinWalkingDistance                 : Word =    7;
+
+  GA_ATTACK_COMPANY_AttackRadius                     : Word =   10;
+  GA_ATTACK_COMPANY_ProtectRangedRadius              : Word =   12;
+  GA_ATTACK_COMPANY_AttackRangedGain                 : Single =     2.8249208927;
+  GA_ATTACK_COMPANY_ProtectRangedGain                : Single =     3.7131431103;
+  GA_ATTACK_COMPANY_ProtectRangedAllInDist           : Word =    2;
+  GA_ATTACK_COMPANY_DecreaseThreat_Prio1             : Single =     0.3383766413;
+  GA_ATTACK_COMPANY_DecreaseThreat_Prio2             : Single =     0.7938493490;
+  GA_ATTACK_COMPANY_DecreaseThreat_Prio3             : Single =     0.0632785782;
+  GA_ATTACK_COMPANY_DecreaseThreat_Prio4             : Single =     0.3591269553;
+  GA_ATTACK_COMPANY_TimePerATile_Slow                : Word =    6;
+  GA_ATTACK_COMPANY_TimePerATile_Fast                : Word =   10;
+
+  GA_ATTACK_COMPANY_MinimumMovement                  : Word =    4;
+  GA_ATTACK_COMPANY_Positioning_InitPolyCnt          : Word =    3;
+//}
+
+{ 2019-12-14
   GA_ATTACK_SQUAD_ChangeTarget_DistTolerance         : Single =     1.9587301016;
   GA_ATTACK_SQUAD_ChangeTarget_Delay                 : Word =  415;
   GA_ATTACK_SQUAD_TargetReached_Position             : Word =    6;
@@ -40,6 +65,9 @@ var
   GA_ATTACK_COMPANY_DecreaseThreat_Prio4             : Single =     0.4229704440;
   GA_ATTACK_COMPANY_TimePerATile_Slow                : Word =    5;
   GA_ATTACK_COMPANY_TimePerATile_Fast                : Word =   11;
+
+  GA_ATTACK_COMPANY_MinimumMovement                  : Word =    5;
+  GA_ATTACK_COMPANY_Positioning_InitPolyCnt          : Word =    3;
 //}
 
 { 2019-12-13
@@ -263,9 +291,9 @@ var
 
 
 {  KM_NavMeshPathFinding }
-//{ 2019-12-14
-  GA_PATHFINDING_AvoidTraffic                        : Single =     2.4100508690;
-  GA_PATHFINDING_AvoidSpecEnemy                      : Single =     0.9644539356;
+//{ 2019-12-15
+  GA_PATHFINDING_AvoidTraffic                        : Single =     2.7153608799;
+  GA_PATHFINDING_AvoidSpecEnemy                      : Single =     0.8165699244;
 //}
 
 { 2019-12-13

@@ -288,8 +288,8 @@ type
   public
     Tag, Tag2: array of Cardinal; //0..Count-1
     procedure Clear; override;
-    procedure Add(const aLoc: TKMPoint; aTag: Cardinal; aTag2: Cardinal = 0); reintroduce;
-    function IndexOf(const aLoc: TKMPoint; aTag: Cardinal; aTag2: Cardinal): Integer;
+    procedure Add(const aLoc: TKMPoint; aTag: Cardinal; aTag2: Cardinal = 0); reintroduce; virtual;
+    function IndexOf(const aLoc: TKMPoint; aTag: Cardinal; aTag2: Cardinal): Integer; overload;
     procedure SortByTag;
     function Remove(const aLoc: TKMPoint): Integer; override;
     procedure Delete(aIndex: Integer); override;
@@ -338,12 +338,14 @@ type
   end;
 
 
-  TKMPointAppearenceList = class(TKMPointList)
+  TKMPointCounterList = class(TKMPointTagList)
   private
-    fAppearences: array of Word;
+//    fAppearences: array of Word;
   public
-    procedure Add(const aLoc: TKMPoint); override;
-    function GetAppearences(aIndex: Integer): Word;
+    procedure Add(const aLoc: TKMPoint; aTag2: Cardinal = 0); reintroduce;
+    procedure AddNew(const aLoc: TKMPoint; aTag2: Cardinal = 0);
+    function GetPointsCnt(aIndex: Integer): Word; overload;
+    function GetPointsCnt(const aLoc: TKMPoint): Word; overload;
   end;
 
 
@@ -836,7 +838,7 @@ end;
 
 procedure TKMPointTagList.Delete(aIndex: Integer);
 begin
-  if not InRange(aIndex, 0, Count-1) then Exit;
+  if not InRange(aIndex, 0, Count - 1) or (Count = 0) then Exit;
 
   inherited Delete(aIndex);
 
@@ -1083,27 +1085,42 @@ begin
 end;
 
 
-{ TKMPointAppearenceList }
-procedure TKMPointAppearenceList.Add(const aLoc: TKMPoint);
+{ TKMPointCounterList }
+procedure TKMPointCounterList.Add(const aLoc: TKMPoint; aTag2: Cardinal = 0);
+var
+  Ind: Integer;
+begin
+  Ind := IndexOf(aLoc);
+  if Ind <> -1 then
+    Tag[Ind] := Tag[Ind] + 1
+  else
+    inherited Add(aLoc, 1, aTag2);
+end;
+
+
+procedure TKMPointCounterList.AddNew(const aLoc: TKMPoint; aTag2: Cardinal = 0);
+begin
+  if Contains(aLoc) then Exit;
+
+  inherited Add(aLoc, 1, aTag2);
+end;
+
+
+function TKMPointCounterList.GetPointsCnt(aIndex: Integer): Word;
+begin
+  Result := Tag[aIndex];
+end;
+
+
+function TKMPointCounterList.GetPointsCnt(const aLoc: TKMPoint): Word;
 var
   Ind: Integer;
 begin
   Ind := IndexOf(aLoc);
   if Ind = -1 then
-  begin
-    inherited Add(aLoc);
-
-    if fCount >= Length(fAppearences) then  SetLength(fAppearences, fCount + 32); //Expand the list
-
-    fAppearences[fCount - 1]  := 1;
-  end else
-    fAppearences[Ind] := fAppearences[Ind] + 1;
-end;
-
-
-function TKMPointAppearenceList.GetAppearences(aIndex: Integer): Word;
-begin
-  Result := fAppearences[aIndex];
+    Result := 0
+  else
+    Result := Tag[Ind];
 end;
 
 

@@ -72,6 +72,8 @@ type
     //Tells us the stage of house construction or workers making a road
     TileLock: TKMTileLock;
 
+    JamMeter: Integer; //How much this tile is jammed with units, pushing each other
+
     //Used to display half-dug road
     TileOverlay: TKMTileOverlay; //toNone toDig1, toDig2, toDig3, toDig4 + toRoad
 
@@ -144,6 +146,8 @@ type
     property MapY: Word read fMapY;
     property MapRect: TKMRect read fMapRect;
 
+    procedure IncTileJamMeter(const aLoc: TKMPoint; aValue: Integer);
+    function GetTileJamMeter(const aLoc: TKMPoint): Integer;
     procedure SetTileLock(const aLoc: TKMPoint; aTileLock: TKMTileLock);
     procedure UnlockTile(const aLoc: TKMPoint);
     procedure SetRoads(aList: TKMPointList; aOwner: TKMHandID; aUpdateWalkConnects: Boolean = True);
@@ -221,7 +225,7 @@ type
     function GetConnectID(aWalkConnect: TKMWalkConnect; const Loc: TKMPoint): Byte;
 
     function CheckAnimalIsStuck(const Loc: TKMPoint; aPass: TKMTerrainPassability; aCheckUnits: Boolean = True): Boolean;
-    function GetOutOfTheWay(aUnit: Pointer; const PusherLoc: TKMPoint; aPass: TKMTerrainPassability): TKMPoint;
+    function GetOutOfTheWay(aUnit: Pointer; const PusherLoc: TKMPoint; aPass: TKMTerrainPassability; aPusherWasPushed: Boolean = False): TKMPoint;
     function FindSideStepPosition(const Loc, Loc2, Loc3: TKMPoint; aPass: TKMTerrainPassability; out SidePoint: TKMPoint; OnlyTakeBest: Boolean = False): Boolean;
     function Route_CanBeMade(const LocA, LocB: TKMPoint; aPass: TKMTerrainPassability; aDistance: Single): Boolean;
     function Route_CanBeMadeToVertex(const LocA, LocB: TKMPoint; aPass: TKMTerrainPassability): Boolean;
@@ -396,6 +400,7 @@ begin
         //if KaMRandom(16)=0 then Obj := ChopableTrees[KaMRandom(13)+1,4];
         TileOverlay  := toNone;
         TileLock     := tlNone;
+        JamMeter     := 0;
         CornOrWine   := 0;
         Passability  := []; //Gets recalculated later
         TileOwner    := -1;
@@ -449,6 +454,7 @@ begin
       begin
         Land[I,J].TileOverlay  := toNone;
         Land[I,J].TileLock     := tlNone;
+        Land[I,J].JamMeter     := 0;
         Land[I,J].CornOrWine   := 0;
         Land[I,J].Passability  := []; //Gets recalculated later
         Land[I,J].TileOwner    := PLAYER_NONE;
@@ -1718,6 +1724,22 @@ begin
   else
   if (aFrom.X > bX) and (aFrom.Y < bY) then                                   //     A
     Result := not gMapElements[Land[aFrom.Y+1, aFrom.X].Obj].DiagonalBlocked; //   B
+end;
+
+
+procedure TKMTerrain.IncTileJamMeter(const aLoc: TKMPoint; aValue: Integer);
+begin
+  if not TileInMapCoords(aLoc) then Exit;
+
+  Land[aLoc.Y, aLoc.X].JamMeter := Max(0, Land[aLoc.Y, aLoc.X].JamMeter + aValue);
+end;
+
+
+function TKMTerrain.GetTileJamMeter(const aLoc: TKMPoint): Integer;
+begin
+  if not TileInMapCoords(aLoc) then Exit(0);
+
+  Result := Land[aLoc.Y, aLoc.X].JamMeter;
 end;
 
 
@@ -3255,7 +3277,7 @@ end;
 
 // Return random tile surrounding Loc with aPass property. PusherLoc is the unit that pushed us
 // which is preferable to other units (otherwise we can get two units swapping places forever)
-function TKMTerrain.GetOutOfTheWay(aUnit: Pointer; const PusherLoc: TKMPoint; aPass: TKMTerrainPassability): TKMPoint;
+function TKMTerrain.GetOutOfTheWay(aUnit: Pointer; const PusherLoc: TKMPoint; aPass: TKMTerrainPassability; aPusherWasPushed: Boolean = False): TKMPoint;
 var
   U: TKMUnit;
   Loc: TKMPoint;
@@ -3271,56 +3293,76 @@ var
 var
   I, K: Integer;
   tx, ty: Integer;
-  isFree, isOffroad, isPushable: Boolean;
+  isFree, isOffroad, isPushable, exchWithPushedPusher, exchWithPushedPusherChoosen: Boolean;
+  newWeight, bestWeight: Single;
   TempUnit: TKMUnit;
   weigthedList: TKMWeightedPointList;
 begin
   U := TKMUnit(aUnit);
   Loc := U.CurrPosition;
+
   Result := Loc;
+  bestWeight := -1e30;
+  exchWithPushedPusherChoosen := False;
 
-  weigthedList := TKMWeightedPointList.Create;
-  try
-    // Check all available walkable positions except self
-    for I := -1 to 1 do for K := -1 to 1 do
-      if (I <> 0) or (K <> 0) then
+  // Check all available walkable positions except self
+  for I := -1 to 1 do for K := -1 to 1 do
+  if (I <> 0) or (K <> 0) then
+    begin
+      tx := Loc.X + K;
+      ty := Loc.Y + I;
+
+      if TileInMapCoords(tx, ty)
+        and CanWalkDiagonaly(Loc, tx, ty) //Check for trees that stop us walking on the diagonals!
+        and (Land[ty,tx].TileLock in [tlNone, tlFenced])
+        and (aPass in Land[ty,tx].Passability)
+        and (not (U is TKMUnitWorker) or GoodForBuilder(tx, ty)) then
       begin
-        tx := Loc.X + K;
-        ty := Loc.Y + I;
+        // Try to be pushed to empty tiles
+        isFree := Land[ty, tx].IsUnit = nil;
 
-        if TileInMapCoords(tx, ty)
-          and CanWalkDiagonaly(Loc, tx, ty) //Check for trees that stop us walking on the diagonals!
-          and (Land[ty,tx].TileLock in [tlNone, tlFenced])
-          and (aPass in Land[ty,tx].Passability)
-          and (not (U is TKMUnitWorker) or GoodForBuilder(tx, ty)) then
+        // Try to be pushed out to non-road tiles when possible
+        isOffroad := False;//not TileHasRoad(tx, ty);
+
+        // Try to be pushed to exchange with pusher or to push other non-locked units
+        isPushable := False;
+        exchWithPushedPusher := False;
+        if Land[ty, tx].IsUnit <> nil then
         begin
-          // Try to be pushed to empty tiles
-          isFree := Land[ty, tx].IsUnit = nil;
-
-          // Try to be pushed out to non-road tiles when possible
-          isOffroad := not TileHasRoad(tx, ty);
-          // Try to be pushed to exchange with pusher or to push other non-locked units
-          isPushable := False;
-          if Land[ty, tx].IsUnit <> nil then
+          TempUnit := UnitsHitTest(tx, ty);
+          // Always include the pushers loc in the possibilities, otherwise we can get two units swapping places forever
+          if (KMPoint(tx, ty) = PusherLoc) then
           begin
-            TempUnit := UnitsHitTest(tx, ty);
-            // Always include the pushers loc in the possibilities, otherwise we can get two units swapping places forever
-            if (KMPoint(tx, ty) = PusherLoc)
-            or ((TempUnit <> nil) and (TempUnit.Action is TKMUnitActionStay)
-                and (not TKMUnitActionStay(TempUnit.Action).Locked)) then
+            //Check if we try to exchange with pusher, who was also pushed (that is non-profitable exchange)
+            //We want to avoid it
+            if aPusherWasPushed then
+              exchWithPushedPusher := True //Mark that tile to exchange with pusher
+            else
               isPushable := True;
-          end;
+          end
+          else
+            if ((TempUnit <> nil) and (TempUnit.Action is TKMUnitActionStay)
+              and (not TKMUnitActionStay(TempUnit.Action).Locked)) then
+              isPushable := True;
+        end;
+        newWeight := 40*Ord(isFree)
+                      + Ord(isOffroad)
+                      + Ord(isPushable)
+                      - 0.3*Land[ty,tx].JamMeter
+                      + 2*KaMRandom('TKMTerrain.GetOutOfTheWay');
 
-          weigthedList.Add(KMPoint(tx, ty),
-                           Ord(isFree)*8 + Ord(isOffroad)*4 + Ord(isPushable)*2 + KaMRandom('TKMTerrain.GetOutOfTheWay'));
+        if newWeight > bestWeight then
+        begin
+          bestWeight := newWeight;
+          Result := KMPoint(tx, ty);
+          exchWithPushedPusherChoosen := exchWithPushedPusher;
         end;
       end;
-    //Choose loc to be pushed to randomly, according to loc weight
-    if weigthedList.Count > 0 then
-      weigthedList.GetWeightedRandom(Result);
-  finally
-    weigthedList.Free;
-  end;
+    end;
+  //Punish very bad positions, where we decided to exchange with pushed pusher's loc
+  //(non-profitable exchange was choosen as the only possibility), so we will mark this pos as very unpleasant
+  if exchWithPushedPusherChoosen then
+    IncTileJamMeter(Loc, 50);
 end;
 
 
@@ -4246,6 +4288,7 @@ begin
       SaveStream.Write(Land[I,K].TreeAge);
       SaveStream.Write(Land[I,K].FieldAge);
       SaveStream.Write(Land[I,K].TileLock, SizeOf(Land[I,K].TileLock));
+      SaveStream.Write(Land[I,K].JamMeter);
       SaveStream.Write(Land[I,K].TileOverlay, SizeOf(Land[I,K].TileOverlay));
       SaveStream.Write(Land[I,K].TileOwner, SizeOf(Land[I,K].TileOwner));
       if Land[I,K].IsUnit <> nil then
@@ -4285,6 +4328,7 @@ begin
       LoadStream.Read(Land[I,J].TreeAge);
       LoadStream.Read(Land[I,J].FieldAge);
       LoadStream.Read(Land[I,J].TileLock,SizeOf(Land[I,J].TileLock));
+      LoadStream.Read(Land[I,J].JamMeter);
       LoadStream.Read(Land[I,J].TileOverlay,SizeOf(Land[I,J].TileOverlay));
       LoadStream.Read(Land[I,J].TileOwner,SizeOf(Land[I,J].TileOwner));
       LoadStream.Read(Land[I,J].IsUnit, 4);
@@ -4386,6 +4430,9 @@ begin
   begin
     K := (A mod fMapX) + 1;
     I := (A div fMapX) + 1;
+
+    //Reduce JamMeter over time
+    Land[I,K].JamMeter := Max(0, Land[I,K].JamMeter - 1);
 
     if InRange(Land[I,K].FieldAge, 1, CORN_AGE_MAX-1) then
     begin

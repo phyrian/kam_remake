@@ -25,6 +25,7 @@ type
     procedure EatersGoesOut(aIndex: ShortInt);
     function HasFood: Boolean;
     function HasSpace: Boolean;
+    function GetFoodCnt: Integer;
     procedure Save(SaveStream: TKMemoryStream); override;
     procedure Paint; override; //Render all eaters
   end;
@@ -109,6 +110,12 @@ end;
 function TKMHouseInn.HasFood: Boolean;
 begin
   Result := CheckResIn(wtSausages) + CheckResIn(wtBread) + CheckResIn(wtWine) + CheckResIn(wtFish) > 0;
+end;
+
+
+function TKMHouseInn.GetFoodCnt: Integer;
+begin
+  Result := CheckResIn(wtSausages) + CheckResIn(wtBread) + CheckResIn(wtWine) + CheckResIn(wtFish);
 end;
 
 

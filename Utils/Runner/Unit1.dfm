@@ -25,9 +25,9 @@ object Form2: TForm2
     Caption = 'Cycles:'
   end
   object Label2: TLabel
-    Left = 189
-    Top = 216
-    Width = 3
+    Left = 168
+    Top = 235
+    Width = 24
     Height = 13
     Alignment = taRightJustify
   end
@@ -37,6 +37,13 @@ object Form2: TForm2
     Width = 72
     Height = 13
     Caption = 'Duration (min):'
+  end
+  object Label5: TLabel
+    Left = 168
+    Top = 216
+    Width = 24
+    Height = 13
+    Alignment = taRightJustify
   end
   object Button1: TButton
     Left = 103
@@ -56,7 +63,7 @@ object Form2: TForm2
     MaxValue = 1000000
     MinValue = 1
     TabOrder = 1
-    Value = 10
+    Value = 1
   end
   object ListBox1: TListBox
     Left = 8
@@ -93,7 +100,7 @@ object Form2: TForm2
     Top = 8
     Width = 881
     Height = 625
-    ActivePage = TabSheet4
+    ActivePage = TabSheet3
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 4
     OnChange = PageControl1Change
@@ -209,6 +216,6 @@ object Form2: TForm2
     MaxValue = 1000000
     MinValue = 0
     TabOrder = 6
-    Value = 60
+    Value = 20
   end
 end

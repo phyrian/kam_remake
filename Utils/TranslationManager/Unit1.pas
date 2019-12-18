@@ -41,6 +41,7 @@ type
     StatusBar1: TStatusBar;
     clbFolders: TCheckListBox;
     mmSaveAllZIP: TMenuItem;
+    mmSaveSelZIP: TMenuItem;
     sdExportZIP: TSaveDialog;
     FilterGroupBox: TGroupBox;
     cbShowMis: TCheckBox;
@@ -78,6 +79,7 @@ type
     procedure cbShowMisClick(Sender: TObject);
     procedure clbFoldersClickCheck(Sender: TObject);
     procedure mmSaveAllZIPClick(Sender: TObject);
+    procedure mmSaveSelZIPClick(Sender: TObject);
     procedure ListBox1KeyPress(Sender: TObject; var Key: Char);
     procedure mmSaveSelZIPClick(Sender: TObject);
   private
@@ -596,6 +598,34 @@ begin
           MyZip.AddFile(fWorkDir + S, ExtractFilePath(S));
       end;
     end;
+
+  MyZip.SaveToFile(sdExportZIP.FileName);
+  MyZip.Free;
+  ExportPathManager.Free;
+end;
+
+
+procedure TForm1.mmSaveSelZIPClick(Sender: TObject);
+var
+  ExportPathManager: TPathManager;
+  I, K: Integer;
+  MyZip: TZippit;
+  S: string;
+begin
+  if not sdExportZIP.Execute(Handle) then Exit;
+
+  ExportPathManager := TPathManager.Create;
+  ExportPathManager.AddPath(fWorkDir, '');
+
+  MyZip := TZippit.Create;
+  for I := 0 to ExportPathManager.Count - 1 do
+    for K := 0 to gResLocales.Count - 1 do
+      if clbShowLang.Checked[K + 1] then
+      begin
+        S := Format(ExportPathManager[I], [gResLocales[K].Code]);
+        if FileExists(fWorkDir + S) then
+          MyZip.AddFile(fWorkDir + S, ExtractFilePath(S));
+      end;
 
   MyZip.SaveToFile(sdExportZIP.FileName);
   MyZip.Free;

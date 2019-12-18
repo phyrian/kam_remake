@@ -1818,6 +1818,9 @@ begin
   if aFrom <> PLAYER_NONE then
     gHands[aFrom].Stats.UnitKilled(aUnit.UnitType);
 
+  //Demands: food for soldiers / stone or wood for workers
+  Deliveries.Queue.RemDemand(aUnit);
+
   //Call script event after updating statistics
   gScriptEvents.ProcUnitDied(aUnit, aFrom);
 

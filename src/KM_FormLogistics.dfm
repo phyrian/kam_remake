@@ -47,6 +47,10 @@ object FormLogistics: TFormLogistics
           Width = 40
         end
         item
+          Caption = 'iQ'
+          Width = 30
+        end
+        item
           Caption = 'Resource'
           Width = 100
         end
@@ -90,6 +94,10 @@ object FormLogistics: TFormLogistics
         item
           Caption = 'Hand'
           Width = 40
+        end
+        item
+          Caption = 'iD'
+          Width = 30
         end
         item
           Caption = 'Resource'
@@ -140,6 +148,10 @@ object FormLogistics: TFormLogistics
           Width = 40
         end
         item
+          Caption = 'iO'
+          Width = 30
+        end
+        item
           Caption = 'Resource'
           Width = 100
         end
@@ -153,7 +165,6 @@ object FormLogistics: TFormLogistics
         end
         item
           Caption = 'Count'
-          Width = 50
         end
         item
           Caption = 'Performed'

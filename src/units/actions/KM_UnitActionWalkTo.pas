@@ -190,6 +190,8 @@ begin
 
   if aSetPushed then
   begin
+    gTerrain.IncTileJamMeter(aLocB, 1);
+    gTerrain.IncTileJamMeter(fUnit.CurrPosition, 1);
     fInteractionStatus := kisPushed; //So that unit knows it was pushed not just walking somewhere
     Explanation := 'We were asked to get out of the way';
     ExplanationLogAdd;
@@ -617,7 +619,8 @@ end;
 
 { We can push idling unit }
 function TKMUnitActionWalkTo.IntSolutionPush(fOpponent:TKMUnit; HighestInteractionCount:integer):boolean;
-var OpponenTKMTerrainPassability: TKMTerrainPassability;
+var
+  OpponentPass: TKMTerrainPassability;
 begin
   Result := False;
 
@@ -626,25 +629,28 @@ begin
 
   //Ask the other unit to step aside, only if they are idle!
   if (fOpponent.Action is TKMUnitActionStay)
-  and not TKMUnitActionStay(fOpponent.Action).Locked then
+    and not TKMUnitActionStay(fOpponent.Action).Locked then
   begin
     //We must alert the opponent to our presence because it looks bad when you warrior is pushed
     //by the enemy instead of fighting them.
     //CheckAlliance is for optimisation since pushing allies doesn't matter
     if (fOpponent is TKMUnitWarrior)
-    and (gHands.CheckAlliance(fOpponent.Owner, fUnit.Owner) = atEnemy)
-    and TKMUnitWarrior(fOpponent).CheckForEnemy then
+      and (gHands.CheckAlliance(fOpponent.Owner, fUnit.Owner) = atEnemy)
+      and TKMUnitWarrior(fOpponent).CheckForEnemy then
       Exit;
 
+    OpponentPass := fOpponent.DesiredPassability;
+    if OpponentPass = tpWalkRoad then
+      OpponentPass := tpWalk;
+
+    //We tell opponent, that we were also pushed, so he could avoid unhelpful exchange with us
+    //So ipdate fInteractionStatus after that
+    fOpponent.SetActionWalkPushed(gTerrain.GetOutOfTheWay(fOpponent, fUnit.CurrPosition, OpponentPass, WasPushed));
+
     fInteractionStatus := kisPushing;
-    OpponenTKMTerrainPassability := fOpponent.DesiredPassability;
-    if OpponenTKMTerrainPassability = tpWalkRoad then
-      OpponenTKMTerrainPassability := tpWalk;
 
     if not CanAbandonInternal then
       raise ELocError.Create('Unit walk IntSolutionPush', fUnit.CurrPosition);
-
-    fOpponent.SetActionWalkPushed(gTerrain.GetOutOfTheWay(fOpponent, fUnit.CurrPosition, OpponenTKMTerrainPassability));
 
     Explanation := 'Unit was blocking the way but it has been forced to go away now';
     ExplanationLogAdd; //Hopefully next tick tile will be free and we will walk there

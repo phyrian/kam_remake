@@ -25,7 +25,10 @@ type
     Loc, SpecPoint: TKMPoint;
   end;
   THousePlanArray = record
-    Count, Completed, UnderConstruction, Planned: Word;
+    Count, // Number of houses
+    Completed, // Finished houses
+    UnderConstruction, // Digged plans
+    Planned: Word; // Reserved houses
     Plans: array of THousePlan;
   end;
   TPlannedHousesArray = array [HOUSE_MIN..HOUSE_MAX] of THousePlanArray;

@@ -312,9 +312,14 @@ begin
   if (fTargetUnit <> nil) then
   begin
     FinPos := fTargetUnit.CurrPosition;
-    if PlanPath(aTick, ActPos, FinPos, True, False) then
+    if PlanPath(aTick, ActPos, FinPos, True, False) then  // Check if squad is in the place
       Group.OrderWalk(FinPos, True, wtokAISquad, FinalPosition.Dir)
-    else if (fGroup.GroupType <> gtRanged) OR (fAttackTimeLimit < aTick) OR (KMDistanceSqr(FinPos,ActPos) > 12*12) then // fTargetChanged OR
+    else if
+      (fGroup.GroupType <> gtRanged) // If not ranged then send a command to attack every update
+      OR (KMDistanceSqr(FinPos,ActPos) > 12*12) // If ranged send attack command only until shoot distance to prevent reset of the shooting animation
+      OR (fGroup.Order in [goNone, goWalkTo]) // If ranged send attack command also if target is already in range but previous command was not attack something
+      OR (fAttackTimeLimit < aTick) // If ranged send attack command every X ticks to force at least first line of archers to shoot
+       then
     begin
       fAttackTimeLimit := aTick + GA_ATTACK_SQUAD_ChangeTarget_Delay;
       fTargetChanged := False;

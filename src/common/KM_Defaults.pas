@@ -141,6 +141,7 @@ var
   SHOW_POINTER_DOTS       :Boolean = False; //Show pointer count as small dots below unit/houses
   SHOW_GROUND_LINES       :Boolean = False; //Show a line below all sprites to mark the ground height used in Z-Order
   SHOW_UNIT_MOVEMENT      :Boolean = False; //Draw unit movement overlay (occupied tile), Only if unit interaction enabled
+  SHOW_JAM_METER          :Boolean = False; //Show jam meter value on terrain
   SHOW_UIDs               :Boolean = False;  //Show units/groups/houses UIDs
   SHOW_WALK_CONNECT       :Boolean = False; //Show floodfill areas of interconnected areas
   SHOW_DEFENCE_POSITIONS  :Boolean = False;
