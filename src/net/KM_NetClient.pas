@@ -236,7 +236,9 @@ begin
       begin
         Inc(fTotalSize, PacketLength);
         //Skip packet header
-        fOnRecieveData(Self, PacketSender, @fBuffer[7], PacketLength);
+        // Check if fOnReceiveData is assigned (TKMServerQuery could disconnect client but some messages can still arrive and we are in a different thread at this moment)
+        if Assigned(fOnRecieveData) then
+          fOnRecieveData(Self, PacketSender, @fBuffer[7], PacketLength);
 
         //Check if Network was stopped by processing above packet (e.g. version mismatch)
         if not Assigned(fOnRecieveData) then

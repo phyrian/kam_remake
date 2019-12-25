@@ -1333,6 +1333,6 @@
 1381:Error loading unsupported version %s replay from %s
 1382:Map name
 1383:Time
-1384:Vers.
+1384:Version
 1385:Loading unsupported version could cause game not being properly loaded or even cause game crash
 1386:Unsupported version

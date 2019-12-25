@@ -1145,7 +1145,8 @@ begin
       (fGameResultMsg <> grGameContinues)
       or SHOW_ENEMIES_STATS
       or (gGame.GameMode in [gmMultiSpectate, gmReplaySingle, gmReplayMulti])
-      or (gHands[aHandId].Alliances[gMySpectator.HandID] = atAlly));
+      or (gHands[aHandId].Alliances[gMySpectator.HandID] = atAlly)
+      or gMySpectator.Hand.AI.HasWon);
 end;
 
 
@@ -1357,7 +1358,9 @@ var
   ResultsLabelCap: UnicodeString;
 begin
   //MP Stats can be shown from SP stats page. We have to hide AI players then, depending on game result
-  fShowAIResults := not (gGame.GameMode in [gmSingle, gmCampaign]) or (fGameResultMsg in [grWin, grReplayEnd]);
+  fShowAIResults := not (gGame.GameMode in [gmSingle, gmCampaign])
+                    or (fGameResultMsg in [grWin, grReplayEnd])
+                    or ((fGameResultMsg = grGameContinues) and (gMySpectator.Hand.AI.HasWon));
 
   // When exit mission update stats to build actual charts
   // without CHARTS_SAMPLING_FOR_TACTICS or CHARTS_SAMPLING_FOR_ECONOMY delays

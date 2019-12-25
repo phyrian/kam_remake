@@ -581,11 +581,22 @@ end;
 //Decreases the pointer counter
 //Should be used only by gHands for clarity sake
 procedure TKMUnitGroup.ReleaseGroupPointer;
+var
+  ErrorMsg: UnicodeString;
 begin
   Assert(gGame.AllowGetPointer, 'ReleaseGroupPointer is not allowed outside of game tick update procedure, it could cause game desync');
 
   if fPointerCount < 1 then
-    raise ELocError.Create('Group remove pointer', Position);
+  begin
+    ErrorMsg := 'Group remove pointer for G: ';
+    try
+      ErrorMsg := ErrorMsg + ObjToStringShort(',');
+    except
+      on E: Exception do
+        ErrorMsg := ErrorMsg + IntToStr(UID);
+    end;
+    raise ELocError.Create(ErrorMsg, Position);
+  end;
   Dec(fPointerCount);
 end;
 

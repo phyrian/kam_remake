@@ -630,12 +630,15 @@ end;
 
 
 function GetStackTrace(aLinesCnt: Integer): UnicodeString;
+{$IFDEF WDC}
 var
   I: Integer;
   SList: TStringList;
+{$ENDIF}
 begin
   Result := '';
 
+  {$IFDEF WDC}
   try
     raise Exception.Create('');
   except
@@ -650,6 +653,7 @@ begin
       SList.Free;
     end;
   end;
+  {$ENDIF}
 end;
 
 

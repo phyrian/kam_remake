@@ -1219,6 +1219,7 @@ begin
   for I := 0 to fCount - 1 do
     FreeAndNil(fMaps[I]);
   fCount := 0;
+  SetLength(fMaps, 0); //We could use Low and High. Need to reset array to 0 length
 end;
 
 
@@ -1349,8 +1350,8 @@ var TempMaps: array of TKMapInfo;
       fMaps[J] := TempMaps[J];
   end;
 begin
-  SetLength(TempMaps, Length(fMaps));
-  MergeSort(Low(fMaps), High(fMaps));
+  SetLength(TempMaps, fCount);
+  MergeSort(0, fCount - 1);
 end;
 
 

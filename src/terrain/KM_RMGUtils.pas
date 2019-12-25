@@ -958,7 +958,7 @@ end;
 
 destructor TKMBalancedResources.Destroy();
 begin
-
+  inherited;
 end;
 
 

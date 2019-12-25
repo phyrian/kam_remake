@@ -175,6 +175,7 @@ type
     procedure AddFirstStorehouse(aEntrance: TKMPoint);
     procedure ResetChooseLocation;
     function NeedToChooseFirstStorehouse: Boolean;
+    function NeedToChooseFirstStorehouseInGame: Boolean;
     procedure AddRoadToList(const aLoc: TKMPoint);
     procedure AddRoad(const aLoc: TKMPoint);
     procedure AddField(const aLoc: TKMPoint; aFieldType: TKMFieldType; aStage: Byte = 0; aKeepOldObject: Boolean = False);
@@ -965,8 +966,8 @@ begin
     //AI ignores FOW (this function is used from scripting)
     Result := Result and gTerrain.TileInMapCoords(Tx, Ty, 1)
                      and ((fHandType = hndComputer)
-                      or (NeedToChooseFirstStorehouse and fFogOfWar.CheckTileInitialRevelation(Tx, Ty)) //Use initial revelation for first storehouse
-                      or (not NeedToChooseFirstStorehouse and (fFogOfWar.CheckTileRevelation(Tx, Ty) > 0)));
+                      or (NeedToChooseFirstStorehouseInGame and fFogOfWar.CheckTileInitialRevelation(Tx, Ty)) //Use initial revelation for first storehouse
+                      or (not NeedToChooseFirstStorehouseInGame and (fFogOfWar.CheckTileRevelation(Tx, Ty) > 0)));
     //This checks below require Tx;Ty to be within the map so exit immediately if they are not
     if not Result then exit;
 
@@ -1668,8 +1669,8 @@ begin
 
         //Forbid planning on unrevealed areas and fieldplans
         AllowBuild := aIgnoreFOW
-                      or (NeedToChooseFirstStorehouse and fFogOfWar.CheckTileInitialRevelation(P2.X, P2.Y)) //Use initial revelation for first storehouse
-                      or (not NeedToChooseFirstStorehouse and (fFogOfWar.CheckTileRevelation(P2.X, P2.Y) > 0));
+                      or (NeedToChooseFirstStorehouseInGame and fFogOfWar.CheckTileInitialRevelation(P2.X, P2.Y)) //Use initial revelation for first storehouse
+                      or (not NeedToChooseFirstStorehouseInGame and (fFogOfWar.CheckTileRevelation(P2.X, P2.Y) > 0));
 
         //This tile must not contain fields/houses of allied players or self
         if AllowBuild then
@@ -1849,19 +1850,10 @@ procedure TKMHand.UpdateState(aTick: Cardinal);
 begin
   if not Enabled then Exit;
 
-  if not gGame.IsMapEditor
-    and NeedToChooseFirstStorehouse() then
-  begin
-    if aTick > TIME_TO_SET_FIRST_STOREHOUSE then
-    begin
-      AI.Defeat;
-      Exit;
-    end;
-
-    if fHandType = hndComputer then
-      AI.PlaceFirstStorehouse(fCenterScreen);
-  end;
-
+  //Player has to place first storehouse at some point or will be defeated
+	if NeedToChooseFirstStorehouse and (aTick > TIME_TO_SET_FIRST_STOREHOUSE) then
+	  AI.Defeat;
+  
   //Update Groups logic before Units
   fUnitGroups.UpdateState;
 
@@ -1896,6 +1888,12 @@ end;
 function TKMHand.NeedToChooseFirstStorehouse: Boolean;
 begin
   Result := fChooseLocation.Allowed and not fChooseLocation.Placed;
+end;
+
+
+function TKMHand.NeedToChooseFirstStorehouseInGame: Boolean;
+begin
+  Result := not gGame.IsMapEditor and NeedToChooseFirstStorehouse;
 end;
 
 

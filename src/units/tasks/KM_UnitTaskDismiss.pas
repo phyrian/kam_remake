@@ -55,6 +55,7 @@ end;
 destructor TKMTaskDismiss.Destroy;
 begin
   gHands.CleanUpHousePointer(fSchool);
+  fUnit.DismissInProgress := False; //Reset dismissInProgress Flag to show proper UI
 
   inherited;
 end;

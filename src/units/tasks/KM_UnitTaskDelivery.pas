@@ -26,17 +26,12 @@ type
     //Force delivery, even if fToHouse blocked ware from delivery.
     //Used in exceptional situation, when ware was carried by serf and delivery demand was destroyed and no one new was found
     fForceDelivery: Boolean;
-    fPointBelowToHouse: TKMPoint; //Have to save that point separately, in case ToHouse will be destroyed
-    fPointBelowFromHouse: TKMPoint; //Have to save that point separately, in case FromHouse will be destroyed
     procedure CheckForBetterDestination;
     function FindBestDestination: Boolean;
     function GetDeliverStage: TKMDeliverStage;
-    procedure SetToHouse(aToHouse: TKMHouse);
-    procedure SetFromHouse(aFromHouse: TKMHouse);
-    procedure SetToUnit(aToUnit: TKMUnit);
-    property FromHouse: TKMHouse read fFrom write SetFromHouse;
-    property ToHouse: TKMHouse read fToHouse write SetToHouse;
-    property ToUnit: TKMUnit read fToUnit write SetToUnit;
+    property FromHouse: TKMHouse read fFrom write fFrom;
+    property ToHouse: TKMHouse read fToHouse write fToHouse;
+    property ToUnit: TKMUnit read fToUnit write fToUnit;
   public
     constructor Create(aSerf: TKMUnitSerf; aFrom: TKMHouse; aToHouse: TKMHouse; Res: TKMWareType; aID: Integer); overload;
     constructor Create(aSerf: TKMUnitSerf; aFrom: TKMHouse; aToUnit: TKMUnit; Res: TKMWareType; aID: Integer); overload;
@@ -116,8 +111,6 @@ begin
   LoadStream.Read(fToHouse, 4);
   LoadStream.Read(fToUnit, 4);
   LoadStream.Read(fForceDelivery);
-  LoadStream.Read(fPointBelowToHouse);
-  LoadStream.Read(fPointBelowFromHouse);
   LoadStream.Read(fWareType, SizeOf(fWareType));
   LoadStream.Read(fDeliverID);
   LoadStream.Read(fDeliverKind, SizeOf(fDeliverKind));
@@ -142,8 +135,6 @@ begin
   else
     SaveStream.Write(Integer(0));
   SaveStream.Write(fForceDelivery);
-  SaveStream.Write(fPointBelowToHouse);
-  SaveStream.Write(fPointBelowFromHouse);
   SaveStream.Write(fWareType, SizeOf(fWareType));
   SaveStream.Write(fDeliverID);
   SaveStream.Write(fDeliverKind, SizeOf(fDeliverKind));
@@ -299,27 +290,6 @@ begin
   Result := ((fPhase - 1) //phase was increased at the end of execution
               <= 0)       //<= because fPhase is 0 when task is just created
             or ((fPhase - 1) = 5);
-end;
-
-
-procedure TKMTaskDeliver.SetToHouse(aToHouse: TKMHouse);
-begin
-  fToHouse := aToHouse;
-  fPointBelowToHouse := fToHouse.PointBelowEntrance; //save that point separately, in case fToHouse will be destroyed
-end;
-
-
-procedure TKMTaskDeliver.SetFromHouse(aFromHouse: TKMHouse);
-begin
-  fFrom := aFromHouse;
-  fPointBelowFromHouse := aFromHouse.PointBelowEntrance; //save that point separately, in case fFrom will be destroyed
-end;
-
-
-procedure TKMTaskDeliver.SetToUnit(aToUnit: TKMUnit);
-begin
-  fToUnit := aToUnit;
-  fPointBelowToHouse := KMPOINT_INVALID_TILE; //clean fPointBelowToHouse since we are going to Unit now
 end;
 
 
@@ -581,27 +551,23 @@ begin
     ToUStr := fToUnit.ObjToStringShort(',');
 
   Result := inherited +
-            Format('%s|FromH = [%s]%s|ToH = [%s]%sFromU = [%s]%s|WareT = %s%sPBelow FromH = %s%sPBelow ToH = %s',
+            Format('%s|FromH = [%s]%s|ToH = [%s]%sFromU = [%s]%s|WareT = %s',
                    [aSeparator,
                     FromStr, aSeparator,
                     ToHStr, aSeparator,
                     ToUStr, aSeparator,
-                    GetEnumName(TypeInfo(TKMWareType), Integer(fWareType)), aSeparator,
-                    TypeToString(fPointBelowFromHouse), aSeparator,
-                    TypeToString(fPointBelowToHouse)]);
+                    GetEnumName(TypeInfo(TKMWareType), Integer(fWareType)), aSeparator]);
 end;
 
 
 procedure TKMTaskDeliver.Paint;
 begin
   if SHOW_UNIT_ROUTES
-    and (gMySpectator.Selected = fUnit) then
+    and (gMySpectator.LastSelected = fUnit) then
   begin
-    gRenderAux.RenderWireTile(fPointBelowToHouse, icBlue);
     if fFrom <> nil then
       gRenderAux.RenderWireTile(fFrom.PointBelowEntrance, icDarkBlue);
 
-    gRenderAux.RenderWireTile(fPointBelowToHouse, icOrange);
     if fToHouse <> nil then
       gRenderAux.RenderWireTile(fToHouse.PointBelowEntrance, icLightRed);
     if fToUnit <> nil then

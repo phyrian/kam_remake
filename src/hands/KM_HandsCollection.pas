@@ -176,6 +176,11 @@ var
 begin
   //RMG place storehouse before assembling NavMesh and create influences so AI initialize correctly
   gAIFields.Eye.AfterMissionInit(); // Update Eye so it sees all mines on the map
+  if not gGame.IsMapEditor then
+    for I := 0 to fCount - 1 do
+      with fHandsList[I] do
+        if (HandType = hndComputer) AND NeedToChooseFirstStorehouse() then
+          AI.PlaceFirstStorehouse(CenterScreen);
 
   gAIFields.AfterMissionInit;
 

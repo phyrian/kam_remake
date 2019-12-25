@@ -679,14 +679,18 @@ end;
 
 procedure TKMArmyDefence.UpdateState(aTick: Cardinal);
 const
-  LONG_UPDATE = MAX_HANDS * 20;
+  FAST_UPDATE = MAX_HANDS * 5;
+  SLOW_UPDATE = MAX_HANDS * 20;
 var
   I: Integer;
 begin
-  for I := 0 to Count - 1 do
-    Positions[I].UpdateState(aTick);
-  if (aTick mod LONG_UPDATE = fOwner) AND not gHands[fOwner].AI.Setup.AutoDefend then
-    UpdateFixedDefences();
+  if (aTick mod FAST_UPDATE = fOwner) then
+  begin
+    for I := 0 to Count - 1 do
+      Positions[I].UpdateState(aTick);
+    if (aTick mod SLOW_UPDATE = fOwner) AND not gHands[fOwner].AI.Setup.AutoDefend then
+      UpdateFixedDefences();
+  end;
 end;
 
 
@@ -728,6 +732,16 @@ begin
       Col := 0;
     gRenderAux.CircleOnTerrain(Loc.X, Loc.Y, 1, (Col shl 24) OR COLOR_GREEN, $FFFFFFFF);
   end;
+
+  // Draw defence position of selected unit
+  if (gMySpectator.Selected is TKMUnitGroup) then
+    for I := 0 to Count - 1 do
+      if (gMySpectator.Selected = Positions[I].Group) then
+      begin
+        Loc := Positions[I].Position.Loc;
+        gRenderAux.CircleOnTerrain(Loc.X, Loc.Y, 1, $AA000000 OR COLOR_RED, $FFFFFFFF);
+        break;
+      end;
 
   // First line of defences
   PolyArr := gAIFields.NavMesh.Polygons;

@@ -33,7 +33,7 @@ FOR /F "tokens=* USEBACKQ" %%F IN (`git rev-list --count HEAD`) DO (
 )
 
 REM Now we can have a constant with the right folder name
-@SET build_full_kmr_dir=%BuildFullDir%\kam%YYYY%-%MM%-%DD% (%kam_version% r%kam_revision%)
+@SET build_full_kmr_dir=%BuildFullDir%\kmr%YYYY%-%MM%-%DD% (%kam_version% r%kam_revision%)
 @SET installer_kmr_build_full_dir=..\Installer\BuildFull
 
 @REM default kam_folder is build full directory

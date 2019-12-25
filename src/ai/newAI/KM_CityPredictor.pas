@@ -36,6 +36,7 @@ type
   private
     fOwner: TKMHandID;
     fCityStats: TCityStats;
+    fCityUnderConstruction: Boolean;
     fWorkerCount: Word;
     fGoldMineCnt, fIronMineCnt, fFieldCnt, fBuildCnt: Integer;
     fMaxIronWeapProd, fMaxWoodWeapProd, fMaxSoldiersInMin, fPeaceFactor, fUpdatedPeaceFactor: Single;
@@ -197,6 +198,7 @@ begin
   SaveStream.PlaceMarker('CityPredictor');
   SaveStream.Write(fOwner);
   SaveStream.Write(fWorkerCount);
+  SaveStream.Write(fCityUnderConstruction);
 
   SaveStream.Write(fGoldMineCnt);
   SaveStream.Write(fIronMineCnt);
@@ -233,15 +235,19 @@ begin
   LoadStream.CheckMarker('CityPredictor');
   LoadStream.Read(fOwner);
   LoadStream.Read(fWorkerCount);
+  LoadStream.Read(fCityUnderConstruction);
+
   LoadStream.Read(fGoldMineCnt);
   LoadStream.Read(fIronMineCnt);
   LoadStream.Read(fFieldCnt);
   LoadStream.Read(fBuildCnt);
+
   LoadStream.Read(fMaxIronWeapProd);
   LoadStream.Read(fMaxWoodWeapProd);
   LoadStream.Read(fMaxSoldiersInMin);
   LoadStream.Read(fPeaceFactor);
   LoadStream.Read(fUpdatedPeaceFactor);
+
   LoadStream.Read(fFarmBuildHistory.Count);
   if (fFarmBuildHistory.Count > 0) then
   begin
@@ -441,9 +447,10 @@ procedure TKMCityPredictor.UpdateCityStats();
 var
   UT: TKMUnitType;
   HT: TKMHouseType;
-  Planner: TKMCityPlanner;
+  PH: TPlannedHousesArray;
 begin
-  Planner := gHands[fOwner].AI.CityManagement.Builder.Planner;
+  fCityUnderConstruction := False;
+  PH := gHands[fOwner].AI.CityManagement.Builder.Planner.PlannedHouses;
   with fCityStats do
   begin
     CitizensCnt := 0;
@@ -464,8 +471,9 @@ begin
     begin
       //Houses[HT] := gHands[fOwner].Stats.GetHouseTotal(HT); // Does not consider planned houses
       // Consider only placed, constructed or planned houses (not destroyed houses because plans will remain in CityPlanner)
-      Houses[HT] := Planner.PlannedHouses[HT].Completed + Planner.PlannedHouses[HT].UnderConstruction + Planner.PlannedHouses[HT].Planned;
+      Houses[HT] := PH[HT].Completed + PH[HT].UnderConstruction + PH[HT].Planned;
       HousesCnt := HousesCnt + Houses[HT];
+      fCityUnderConstruction := fCityUnderConstruction OR (PH[HT].UnderConstruction + PH[HT].Planned > 0);
     end;
   end;
 end;
@@ -612,7 +620,7 @@ procedure TKMCityPredictor.FilterRequiredHouses(aTick: Cardinal);
               + fFarmBuildHistory.Quantity[0] * ProductionRate[wtCorn]
               + gHands[fOwner].Stats.GetWareBalance(wtCorn) * 0.25;
   end;
-
+  {
   procedure CheckPeaceFactor();
   const
     IGNORE_HOUSES: set of TKMHouseType = [htCoalMine, htGoldMine, htIronMine, htQuary, htWineyard];
@@ -624,12 +632,14 @@ procedure TKMCityPredictor.FilterRequiredHouses(aTick: Cardinal);
     begin
       Cnt := 0;
       for HT := Low(RequiredHouses) to High(RequiredHouses) do
-        if not (HT in IGNORE_HOUSES) then
-          Inc(Cnt, RequiredHouses[HT]);
-      if (Cnt = 0) then
+        if not (HT in IGNORE_HOUSES) AND gHands[fOwner].Locks.HouseCanBuild(HT) then
+          Inc(Cnt, Max(0,RequiredHouses[HT]));
+      if (Cnt >= 0) then
         UpdateFinalProduction(0.1);
     end;
   end;
+  //}
+
 const
   WEAP_WORKSHOP_DELAY = 35 * 60 * 10;
   WINEYARD_DELAY = 50 * 60 * 10;
@@ -661,7 +671,9 @@ begin
   end;
 
   // Check requirements
-  CheckPeaceFactor();
+  if not fCityUnderConstruction then
+    UpdateFinalProduction(0.1);
+    //CheckPeaceFactor();
 
   // Remove unused houses (iron production)
   if (RequiredHouses[htIronSmithy] < 0) AND (Stats.GetWareBalance(wtIronOre) < 20) then // Dont destroy iron production when there is still iron ore

@@ -374,7 +374,7 @@ TX_MENU_LOAD_DELETE_DELETE = 323; //Delete
 TX_MENU_LOAD_DELETE_CANCEL = 324; //Cancel
 TX_MENU_LOAD_MAP_NAME = 1382; //Map name
 TX_MENU_LOAD_TIME = 1383; //Time
-TX_MENU_LOAD_GAME_VERSION = 1384; //Vers.
+TX_MENU_LOAD_GAME_VERSION = 1384; //Version
 TX_MENU_REPLAY_DELETE_TITLE = 834; //Delete this Replay
 TX_MENU_REPLAY_DELETE_CONFIRM = 801; //Deleting a replay also deletes the associated save. Are you sure you want to delete this save?
 TX_MENU_REPLAY_DELETE = 804; //Delete Replay
@@ -1311,7 +1311,7 @@ TX_HOUSE_BARRACKS_NOT_ACCEPT_RECRUIT_HINT = 1261; //Recruit is not allowed to ge
 
 TX_MAPED_RMG_SETTINGS_TITLE = 1263; //RMG Settings
 TX_MAPED_RMG_BUTTON_HINT = 1264; //Random map generator settings
-TX_MAPED_RMG_BUTTON_TITLE = 1265; //Random Map Generator - Settings
+TX_MAPED_RMG_BUTTON_TITLE = 1265; //RMG Settings
 TX_MAPED_RMG_SETTINGS_MAP_SIZE = 1266; //Map size:
 TX_MAPED_RMG_SETTINGS_LOCATIONS = 1267; //Locations
 TX_MAPED_RMG_SETTINGS_LOCATIONS_HINT = 1268; //Enable locations with resources

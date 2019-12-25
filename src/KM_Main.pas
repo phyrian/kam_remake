@@ -169,6 +169,8 @@ begin
 
   ReinitRender(False);
 
+  fFormMain.UpdateSnowHouses;
+
   Application.OnIdle := DoIdle;
   Application.OnActivate := DoActivate;
   Application.OnDeactivate := DoDeactivate;

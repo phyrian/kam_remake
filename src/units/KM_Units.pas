@@ -96,7 +96,8 @@ type
     fCurrPosition: TKMPoint; //Where we are now
     fPrevPosition: TKMPoint; //Where we were
     fNextPosition: TKMPoint; //Where we will be. Next tile in route or same tile if stay on place
-    fDirection: TKMDirection; //
+    fDirection: TKMDirection; //Direction
+    fLastTimeTrySetActionWalk: Cardinal; //LastTime we tried to set action walk
 
     //No saved fields, used only in players UI
     fDismissInProgress: Boolean; //Mark unit as waiting for Dismiss GIC cmd, to show proper UI
@@ -119,6 +120,8 @@ type
     procedure UpdateHitPoints;
     procedure DoKill(aShowAnimation: Boolean);
     procedure DoDismiss;
+
+    procedure UpdateLastTimeTrySetActionWalk;
   public
     AnimStep: Integer;
     IsExchanging: Boolean; //Current walk is an exchange, used for sliding
@@ -145,7 +148,7 @@ type
     procedure DismissCancel; virtual;
     //Could be used only in UI
     procedure DismissStarted;
-    property DismissInProgress: Boolean read fDismissInProgress;
+    property DismissInProgress: Boolean read fDismissInProgress write fDismissInProgress;
 
     procedure CloseUnit(aRemoveTileUsage: Boolean = True); dynamic;
 
@@ -168,7 +171,11 @@ type
     procedure SetActionSteer;
     procedure SetActionLockedStay(aTimeToStay: Integer; aAction: TKMUnitActionType; aStayStill: Boolean=true; aStillFrame: Byte = 0; aStep: Integer=0);
 
-    procedure SetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance:single; aTargetUnit: TKMUnit; aTargetHouse: TKMHouse);
+    procedure SetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance: Single; aTargetUnit: TKMUnit;
+                            aTargetHouse: TKMHouse; aAvoidLockedByMovementCost: Boolean = True);
+    function TrySetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance: Single; aTargetUnit: TKMUnit;
+                              aTargetHouse: TKMHouse; aAvoidLockedByMovementCost: Boolean = True;
+                              aSilent: Boolean = True): Boolean;
     procedure SetActionWalkToHouse(aHouse: TKMHouse; aDistance: Single; aActionType: TKMUnitActionType = uaWalk);
     procedure SetActionWalkFromHouse(aHouse: TKMHouse; aDistance: Single; aActionType: TKMUnitActionType = uaWalk);
     procedure SetActionWalkToUnit(aUnit: TKMUnit; aDistance:single; aActionType: TKMUnitActionType = uaWalk);
@@ -326,6 +333,9 @@ type
     function UpdateState: Boolean; override;
     procedure Paint; override;
   end;
+
+const
+  TRY_SET_ACTION_WALK_FREQ = 40; //in ticks. How often do we allow to try set action walk
 
 
 implementation
@@ -1142,6 +1152,7 @@ begin
   IsExchanging  := False;
   AnimStep      := UnitStillFrames[fDirection]; //Use still frame at begining, so units don't all change frame on first tick
   Dismissable   := True;
+  fLastTimeTrySetActionWalk := 0;
 
   //Units start with a random amount of condition ranging from 0.5 to 0.7 (KaM uses 0.6 for all units)
   //By adding the random amount they won't all go eat at the same time and cause crowding, blockages, food shortages and other problems.
@@ -1257,6 +1268,7 @@ begin
   LoadStream.Read(fNextPosition);
   LoadStream.Read(fDismissASAP);
   LoadStream.Read(Dismissable);
+  LoadStream.Read(fLastTimeTrySetActionWalk);
 end;
 
 
@@ -1292,11 +1304,23 @@ end;
 {Decreases the pointer counter}
 //Should be used only by gHands for clarity sake
 procedure TKMUnit.ReleaseUnitPointer;
+var
+  ErrorMsg: UnicodeString;
 begin
   Assert(gGame.AllowGetPointer, 'ReleaseUnitPointer is not allowed outside of game tick update procedure, it could cause game desync');
 
   if fPointerCount < 1 then
-    raise ELocError.Create('Unit remove pointer', PrevPosition);
+  begin
+    ErrorMsg := 'Unit remove pointer for U: ';
+    try
+      ErrorMsg := ErrorMsg + ObjToStringShort(',');
+    except
+      on E: Exception do
+        ErrorMsg := ErrorMsg + IntToStr(UID) + ' Pos = ' + fCurrPosition.ToString;
+    end;
+    raise ELocError.Create(ErrorMsg, PrevPosition);
+  end;
+
   Dec(fPointerCount);
 end;
 
@@ -1672,12 +1696,51 @@ begin
 end;
 
 
+procedure TKMUnit.UpdateLastTimeTrySetActionWalk;
+begin
+  fLastTimeTrySetActionWalk := fTicker + KaMRandom(10, 'TKMUnit.TrySetActionWalk'); //Add random component to try set acion for group with a small delay
+end;
+
+
+//Try to set action walk for unit
+//Used for warriors when they try to update route when attacking house and their destination loc is locked, so they try to avoid it
+function TKMUnit.TrySetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance: Single;
+                                   aTargetUnit: TKMUnit; aTargetHouse: TKMHouse;
+                                   aAvoidLockedByMovementCost: Boolean = True;
+                                   aSilent: Boolean = True): Boolean; //Silent by default, as we consider fail could happen
+var
+  newAction: TKMUnitActionWalkTo;
+begin
+  Result := False;
+  //Don't do tries too often
+  if fTicker <= fLastTimeTrySetActionWalk + TRY_SET_ACTION_WALK_FREQ then
+    Exit;
+
+  UpdateLastTimeTrySetActionWalk;
+
+  newAction := TKMUnitActionWalkTo.Create(Self, aLocB, aActionType, aDistance, False, aTargetUnit, aTargetHouse,
+                                          tpUnused, [], True, aAvoidLockedByMovementCost, aSilent);
+
+  //Update action only if route was built, otherwise just keep using previous action
+  if newAction.RouteBuilt then
+  begin
+    SetAction(newAction);
+    Exit(True);
+  end
+  else
+    Exit(False);
+end;
+
+
 //WalkTo action with exact options (retranslated from WalkTo if Obstcale met)
-procedure TKMUnit.SetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance: Single; aTargetUnit: TKMUnit; aTargetHouse: TKMHouse);
+procedure TKMUnit.SetActionWalk(const aLocB: TKMPoint; aActionType: TKMUnitActionType; aDistance: Single;
+                                aTargetUnit: TKMUnit; aTargetHouse: TKMHouse; aAvoidLockedByMovementCost: Boolean = True);
 begin
   if (Action is TKMUnitActionWalkTo) and not TKMUnitActionWalkTo(Action).CanAbandonExternal then
     raise Exception.Create('');
-  SetAction(TKMUnitActionWalkTo.Create(Self, aLocB, aActionType, aDistance, false, aTargetUnit, aTargetHouse));
+  SetAction(TKMUnitActionWalkTo.Create(Self, aLocB, aActionType, aDistance, False, aTargetUnit, aTargetHouse,
+                                       tpUnused, [], True, aAvoidLockedByMovementCost));
+  UpdateLastTimeTrySetActionWalk;
 end;
 
 
@@ -1692,7 +1755,7 @@ begin
                                       aHouse.GetClosestCell(Self.CurrPosition),
                                       aActionType,        //
                                       aDistance,          //Proximity
-                                      false,              //If we were pushed
+                                      False,              //If we were pushed
                                       nil,                //Unit
                                       aHouse              //House
                                       ));
@@ -2161,12 +2224,13 @@ begin
   if fTask <> nil then
     TaskStr := fTask.ObjToString;
 
-  Result := Format('UID = %d%sType = %s%sAction = %s%sTask = [%s]%sCurrPosition = %s',
+  Result := Format('UID = %d%sType = %s%sAction = %s%sTask = [%s]%sCurrPosition = %s%sIsDead = %s',
                    [fUID, aSeparator,
                     GetEnumName(TypeInfo(TKMUnitType), Integer(fType)), aSeparator,
                     ActStr, aSeparator,
                     TaskStr, aSeparator,
-                    TypeToString(fCurrPosition)]);
+                    TypeToString(fCurrPosition), aSeparator,
+                    BoolToStr(fIsDead, True)]);
 end;
 
 
@@ -2185,7 +2249,7 @@ begin
   Result := ObjToStringShort(aSeparator) +
             Format('%sPositionF = %s%sPrevPosition = %s%sNextPosition = %s%s' +
                    'Thought = %s%sHitPoints = %d%sHitPointCounter = %d%sCondition = %d%s' +
-                   'Owner = %d%sHome = %s%sInHouse = %s%sVisible = %s%sIsDead = %s',
+                   'Owner = %d%sHome = %s%sInHouse = %s%sVisible = %s%sAnimStep = %d',
                    [aSeparator,
                     TypeToString(fPositionF), aSeparator,
                     TypeToString(fPrevPosition), aSeparator,
@@ -2198,7 +2262,7 @@ begin
                     HomeStr, aSeparator,
                     InHouseStr, aSeparator,
                     BoolToStr(fVisible, True), aSeparator,
-                    BoolToStr(fIsDead, True)]);
+                    AnimStep]);
 end;
 
 
@@ -2265,6 +2329,7 @@ begin
   SaveStream.Write(fNextPosition);
   SaveStream.Write(fDismissASAP);
   SaveStream.Write(Dismissable);
+  SaveStream.Write(fLastTimeTrySetActionWalk);
 end;
 
 

@@ -1321,8 +1321,8 @@ end;
 
 destructor TKMBuildFF.Destroy();
 begin
-  inherited;
   fLocs.free;
+  inherited;
 end;
 
 
