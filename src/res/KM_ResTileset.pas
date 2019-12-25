@@ -7,7 +7,7 @@ uses
 
 
 const
-  TILES_CNT = 308;
+  TILES_CNT = 309;
   MAX_TILE_TO_SHOW = TILES_CNT;
   MAX_STATIC_TERRAIN_ID = 4997;
   WATER_ANIM_BELOW_350: array[0..6] of Word = (305, 311, 313, 323, 324, 345, 349);
@@ -397,7 +397,9 @@ const
   (tkStone,tkStone,tkDirt,tkDirt),
   (tkCustom,tkCustom,tkCustom,tkCustom), //water animation...
    //305
-  (tkStone,tkStone,tkSnow,tkSnow), (tkStone,tkStone,tkShallowSnow,tkShallowSnow),(tkGoldMount,tkGoldMount,tkGoldMount,tkSnow)
+  (tkStone,tkStone,tkSnow,tkSnow), (tkStone,tkStone,tkShallowSnow,tkShallowSnow),(tkGoldMount,tkGoldMount,tkGoldMount,tkSnow),
+   //308
+  (tkGold,tkGold,tkGold,tkGold)
   );
 
 type
@@ -473,10 +475,11 @@ end;
 
 procedure TKMResTileset.InitRemakeTiles;
 const
+  //ID in png_name
   WalkBuild:     array[0..12] of Integer = (257,262,264,274,275,283,291,299,302,303,304,306,307);
   WalkNoBuild:   array[0..17] of Integer = (258,263,269,270,271,272,278,279,280,281,286,287,288,289,294,295,296,297);
-  NoWalkNoBuild: array[0..20] of Integer = (259,260,261,265,266,267,268,269,273,276,277,282,284,285,
-                                            290,292,293,298,300,301,308);
+  NoWalkNoBuild: array[0..21] of Integer = (259,260,261,265,266,267,268,269,273,276,277,282,284,285,
+                                            290,292,293,298,300,301,308, 309);
 var
   I: Integer;
 begin
@@ -672,8 +675,13 @@ function TKMResTileset.TileIsGold(aTile: Word): Word;
 begin
   Result := 0;
   if aTile > 143 then
+  begin
     if aTile < 148 then
-      Result := aTile - 143;
+      Result := aTile - 143
+    else
+      if aTile = 308 then
+        Result := 5;
+  end;
 end;
 
 

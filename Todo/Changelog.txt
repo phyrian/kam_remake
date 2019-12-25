@@ -136,6 +136,7 @@ Improvements:
  +    Defeat player if he intentionally quit. Show win messages in chat when player win
  +    Reveal FOW by house from all tiles it covers (instead of only its right-bottom corner tile)
  +    Increase number of players up to 12 + 1 spectator (will be adjusted later, after beta-testing)
+ +    Increase number of hands up to 18 (12 for human players and 6 more for AI's)
  +  L Allow changing speed in MP when there's only 1 human (for playing vs AI like it's SP)
  +    Reduced ArmyAttack minimap alert fight distance (24 -> 12) and duration (6s -> 5s)
  +    Make game speed precise
@@ -144,6 +145,7 @@ Improvements:
  +    Enlarge troops direction selector change dir from 15 to 20 pixels
  +    Limit number of units appeared after house destroy to 50 (was 255)
  +    Limit max number of equpped units at once to 100
+ +    Idle units now will try to free popular routes after being pushed
  +    Reduce AttackAlert 'Fight distance' from 24 to 12 and duration from 6 to 5 sec (to avoid markers at locs, where battle is over for a long time already)
  +    Game statistics:
         Ability to see stats while watching replay / spectating. Or allied players stats while playing
@@ -157,6 +159,7 @@ Improvements:
         Visual improvements
  
  Game menu:
+ +    Lobby: added new game mode: Random map
  +    Added difficulty levels for SP/MP/Campaigns missions on their menus. Those levels could be obtained from the script and adjust mission accordingly
  +    Added replay rewind (only backwards to number of savepoints)
  +    Improved game speed calculation, that is why we need to reevaluate lobby game speed into values x1 - x1.25 - x1.5 - x1.75 - x2. Actual game speed remains the same
@@ -188,6 +191,7 @@ Improvements:
  +    Added autosave after PT
  +    Added 'Autosave at game end' option
  +    Added ini setting to change autosaves number and frequency (in reasonable range)
+ +    Add search when type into Load Map (in MapEd) Save/Load game (while in game) lists
  
  Main menu:
  +  L Ability to mark maps as a favourite (gold star) so they appear at the top of the list (find your favourite maps without scrolling through whole list)
@@ -264,6 +268,7 @@ Improvements:
  +    Added show controls IDs option
  +    Added option to export png's from Units.rxx and Houses.rxx and splitting them into different folders with associated texture/masks/txt
  +    Game statistics could be exported from the game results screen to csv with CRC and ability to validate CRC
+ +    Add option to load game/replay even for old game version
  
  MapEditor:
  +    Added RMG for MapEditor (on terrain selection submenu) - random map generator by Toxic

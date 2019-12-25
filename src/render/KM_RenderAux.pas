@@ -356,12 +356,20 @@ end;
 
 
 procedure TRenderAux.TileTerrainJamMeter(const aRect: TKMRect);
+const
+  JAM_DRAW_STEP = 3;
 var
-  I, J: Integer;
+  I, J, K, Limit: Integer;
 begin
   for I := aRect.Top to aRect.Bottom do
     for J := aRect.Left to aRect.Right do
+    begin
+      Limit := (gTerrain.Land[I,J].JamMeter + JAM_DRAW_STEP - 1) div JAM_DRAW_STEP;
+      for K := 0 to Limit - 1 do
+        Quad(J, I, $20FFFFFF and icOrange);
+      //Draw text over quads
       Text(J, I, IntToStr(gTerrain.Land[I,J].JamMeter), icRed);
+    end;
 end;
 
 

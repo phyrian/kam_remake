@@ -386,7 +386,7 @@ type
           with DistributedPos[ DefEval[I].Owner ] do
             if (Count < Length(DefPos)) then
             begin
-              DefEval[I].DefPos^.Weight := DefEval[I].Val; // Copy price for defence
+              DefEval[I].DefPos^.Weight := Max(0, DefEval[I].Val - gAIFields.Influences.GetBestAllianceOwnership(DefEval[I].Owner, DefEval[I].DefPos.Polygon, atAlly) * 50); // Copy price for defense but try to keep soldier out of ally city
               DefPos[ Count ] := DefEval[I].DefPos;
               Inc(Count);
             end;

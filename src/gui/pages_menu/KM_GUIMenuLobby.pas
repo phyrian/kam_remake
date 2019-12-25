@@ -567,6 +567,7 @@ begin
       DropCol_Maps.OnShowList := MapList_OnShow;
       DropCol_Maps.List.OnColumnClick := MapColumnClick;
       DropCol_Maps.List.SearchColumn := 1;
+      DropCol_Maps.List.ColumnIdForScroll := 2;
       DropCol_Maps.OnChange := MapChange;
       DropCol_Maps.List.OnCellClick := DropBoxMaps_CellClick;
 
@@ -1928,12 +1929,12 @@ begin
     MAP_TYPE_INDEX_SAVE:  //Saved Game
         begin
           fSavesMP.Refresh(MapList_ScanUpdate, True);
-          DropCol_Maps.DropWidth := 800;
+          DropCol_Maps.DropWidth := 850;
           DropCol_Maps.DefaultCaption := gResTexts[TX_LOBBY_MAP_SELECT_SAVED];
           DropCol_Maps.SetColumns(fntOutline,
                                   [gResTexts[TX_MENU_LOAD_FILE], '#', gResTexts[TX_MENU_SAVE_TIME], gResTexts[TX_MENU_LOAD_DATE],
                                    gResTexts[TX_MENU_LOAD_MAP_NAME], gResTexts[TX_MENU_LOAD_GAME_VERSION]],
-                                  [0, 290, 320, 400, 540, 740]);
+                                  [0, 290, 320, 400, 540, 760]);
         end;
     else
         begin

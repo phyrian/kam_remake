@@ -276,7 +276,7 @@ begin
     else
       Button_Unit_Dismiss.Hint := gResTexts[TX_UNIT_TASK_DISMISS_HINT];
 
-    Panel_Unit_Dismiss.Visible := SHOW_DISMISS_UNITS_BTN and fAskDismiss;
+    Panel_Unit_Dismiss.Visible := False; //Do not show dismiss confirmation anymore
   end;
 
   ShowDismissBtn;
@@ -407,7 +407,9 @@ begin
   begin
     ShowUnitInfo(TKMUnit(gMySpectator.Selected), not TKMUnit(gMySpectator.Selected).IsDismissing);
     if TKMUnit(gMySpectator.Selected).IsDismissCancelAvailable then
-      gGame.GameInputProcess.CmdUnit(gicUnitDismissCancel, TKMUnit(gMySpectator.Selected));
+      gGame.GameInputProcess.CmdUnit(gicUnitDismissCancel, TKMUnit(gMySpectator.Selected))
+    else
+      Unit_Dismiss( Button_Unit_DismissYes ); // Call for Dismiss task immidiately
   end;
 end;
 

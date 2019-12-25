@@ -590,7 +590,8 @@ procedure TKMMapEdRMG.RMG_Generate_Map(Sender: TObject);
           Gold := TBar_Res_Gold.Position;
           Iron := TBar_Res_Iron.Position;
         end;
-        if (DList_InitRes <> nil) then
+        if (DList_InitRes <> nil)
+          and fMPLobby then
           InitialResources := DList_InitRes.ItemIndex;
       end;
       with Obstacle do
@@ -672,7 +673,7 @@ begin
       // Get RMG config
       GetSettingsFromGUI();
       // Call RMG
-      fRMG.GenerateMap();
+      fRMG.GenerateMap(True);
       // Save map
       gGame.SaveMapEditor(Format('%s\%s\%s\%s.dat',[ExtractFilePath(ParamStr(0)), MAPS_MP_FOLDER_NAME, MAPS_RMG_NAME, MAPS_RMG_NAME]));
     finally
@@ -684,7 +685,7 @@ begin
   else if (gGame <> nil) then
   begin
     GetSettingsFromGUI();
-    fRMG.GenerateMap();
+    fRMG.GenerateMap(False);
   end;
   if Assigned(fOnNewMap) then
     fOnNewMap();

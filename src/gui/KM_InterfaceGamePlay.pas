@@ -315,7 +315,7 @@ type
     procedure AlliesTeamChange(Sender: TObject);
     procedure CinematicUpdate;
     procedure LoadHotkeysFromHand;
-    procedure SetButtons(aPaused: Boolean);
+    procedure UpdateReplayButtons(aPaused: Boolean);
     procedure ReplaySaved;
 
     property UIMode: TUIMode read fUIMode;
@@ -1808,7 +1808,7 @@ begin
 end;
 
 
-procedure TKMGamePlayInterface.SetButtons(aPaused: Boolean);
+procedure TKMGamePlayInterface.UpdateReplayButtons(aPaused: Boolean);
 begin
   Button_ReplayPause.Enabled := aPaused;
   Button_ReplayStep.Enabled := not aPaused;
@@ -1934,26 +1934,26 @@ begin
   if Sender = Button_ReplayPause then
   begin
     gGame.IsPaused := True;
-    SetButtons(False);
+    UpdateReplayButtons(False);
   end;
 
   if Sender = Button_ReplayStep then
   begin
     gGame.StepOneFrame;
     gGame.IsPaused := False;
-    SetButtons(False);
+    UpdateReplayButtons(False);
   end;
 
   if Sender = Button_ReplayResume then
   begin
     gGame.IsPaused := False;
-    SetButtons(True);
+    UpdateReplayButtons(True);
   end;
 
   if Sender = Button_ReplayExit then
   begin
     gGame.GameHold(True, grReplayEnd);
-    SetButtons(True);
+    UpdateReplayButtons(True);
   end;
 
   if Sender = Button_ReplaySaveAt then
@@ -2296,7 +2296,7 @@ begin
   if IsPaused then
   begin
     gGame.IsPaused := True;
-    SetButtons(False); //Update buttons
+    UpdateReplayButtons(False); //Update buttons
     gGame.GamePlayInterface.UpdateState(gGame.GameTick);
   end;
 
@@ -2489,6 +2489,7 @@ begin
   ReleaseDirectionSelector; // Don't restrict cursor movement to direction selection while paused
   fViewport.ReleaseScrollKeys;
   gGame.IsPaused := aValue;
+  UpdateReplayButtons(aValue);
   Panel_Pause.Visible := aValue;
 end;
 
@@ -2512,7 +2513,7 @@ begin
                     Label_PlayMore.Caption := gResTexts[TX_GAMEPLAY_REPLAY_ENDED];
                     Button_PlayMore.Caption := gResTexts[TX_GAMEPLAY_REPLAY_CONTINUEWATCHING];
                     Button_PlayQuit.Caption := gResTexts[TX_GAMEPLAY_QUIT_TO_MENU];
-                  end;
+                 end;
     else if DoShow then
       raise Exception.Create('Wrong message in ShowPlayMore'); // Can become hidden with any message
   end;
@@ -2563,7 +2564,7 @@ begin
       grDefeat:    gGame.GameHold(false, grDefeat);
       grReplayEnd: begin
                       gGame.SkipReplayEndCheck := True;
-                      gGame.GameHold(false, grReplayEnd);
+                      gGame.GameHold(False, grReplayEnd);
                     end;
     end;
 end;
@@ -3881,7 +3882,7 @@ begin
                 gGame.GameInputProcess.CmdBuild(gicBuildHousePlan, P, TKMHouseType(gGameCursor.Tag1));
                 // If shift pressed do not reset cursor (keep selected building)
                 if not (ssShift in Shift)
-                  and not gMySpectator.Hand.NeedToChooseFirstStorehouse then //Do not show Build menu after place first storehouse feature
+                  and not gMySpectator.Hand.NeedToChooseFirstStorehouseInGame then //Do not show Build menu after place first storehouse feature
                   fGuiGameBuild.Show;
               end
               else

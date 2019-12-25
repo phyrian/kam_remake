@@ -112,9 +112,10 @@ begin
   ColumnBox_Replays.SetColumns(fntOutline,
                                ['', gResTexts[TX_MENU_LOAD_FILE], gResTexts[TX_MENU_LOAD_DATE], gResTexts[TX_MENU_LOAD_MAP_NAME],
                                 gResTexts[TX_MENU_LOAD_TIME], gResTexts[TX_MENU_LOAD_GAME_VERSION]],
-                               [0, 22, 440, 580, 825, 897]);
+                               [0, 22, 440, 580, 805, 885]);
   ColumnBox_Replays.Anchors := [anLeft,anTop,anBottom];
   ColumnBox_Replays.SearchColumn := 1;
+  ColumnBox_Replays.ColumnIdForScroll := 2;
   ColumnBox_Replays.OnChange := Replays_ListClick;
   ColumnBox_Replays.OnColumnClick := Replays_Sort;
   ColumnBox_Replays.OnDoubleClick := Replays_Play;

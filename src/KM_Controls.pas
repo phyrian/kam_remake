@@ -1187,6 +1187,7 @@ type
     property HeaderHint[aIndes: Integer]: UnicodeString read GetHeaderHint write SetHeaderHint;
     property OnHint: TUnicodeStringEvent read fOnHint write fOnHint;
 
+    property Count: Integer read fCount;
     property Font: TKMFont read fFont write fFont;
     property ColumnCount: Integer read fCount;
     property Columns[aIndex: Integer]: TKMListHeaderColumn read GetColumn;
@@ -7327,13 +7328,19 @@ end;
 
 
 procedure TKMColumnBox.ScrollBarChangeVisibility;
+var
+  I: Integer;
 begin
   if Visible and (ColumnIdForScroll <> -1) then
   begin
     if fScrollBar.Visible then
-      fHeader.Offset[ColumnIdForScroll] := fHeader.Offset[ColumnIdForScroll] - fScrollBar.Width
+      for I := ColumnIdForScroll to fHeader.Count - 1 do
+        fHeader.Offset[I] := fHeader.Offset[I] - fScrollBar.Width
     else
-      fHeader.Offset[ColumnIdForScroll] := fHeader.Offset[ColumnIdForScroll] + fScrollBar.Width;
+    begin
+      for I := ColumnIdForScroll to fHeader.Count - 1 do
+        fHeader.Offset[I] := fHeader.Offset[I] + fScrollBar.Width;
+    end;
   end;
 end;
 

@@ -631,7 +631,10 @@ begin
     MapName := MAPS[K];
     for L := 1 to cnt_MAP_SIMULATIONS do
     begin
+      OnProgress2(MapName + ' Run ' + IntToStr(L));
       gGameApp.NewSingleMap(Format('%s..\..\Maps\%s\%s.dat',[ExtractFilePath(ParamStr(0)),MapName,MapName]), MapName);
+
+      SetKaMSeed(L + 1000);
 
       if CRASH_DETECTION_MODE then
         gGameApp.Game.Save('CrashDetection', Now);
@@ -651,6 +654,7 @@ begin
         fBestScore := Score;
         gGameApp.Game.Save(Format('B__%s__No_%.3d__Score_%.6d',[MapName, L, Round(Score)]), Now);
       end;
+
     end;
     fAverageScore := fAverageScore / cnt_MAP_SIMULATIONS;
     gGameApp.Game.Save(Format('AVRG_%s__%.6d',[MapName, Round(fAverageScore)]), Now);

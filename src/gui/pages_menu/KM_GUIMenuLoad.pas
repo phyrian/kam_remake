@@ -88,8 +88,9 @@ begin
     ColumnBox_Load.SetColumns(fntOutline,
                               ['', gResTexts[TX_MENU_LOAD_FILE], gResTexts[TX_MENU_LOAD_DATE], gResTexts[TX_MENU_LOAD_MAP_NAME],
                                gResTexts[TX_MENU_LOAD_TIME], gResTexts[TX_MENU_LOAD_GAME_VERSION]],
-                              [0, 22, 440, 580, 825, 897]);
+                              [0, 22, 440, 580, 805, 885]);
     ColumnBox_Load.SearchColumn := 1;
+    ColumnBox_Load.ColumnIdForScroll := 2;
     ColumnBox_Load.OnColumnClick := Load_Sort;
     ColumnBox_Load.OnChange := Load_ListClick;
     ColumnBox_Load.OnDoubleClick := LoadClick;
@@ -107,7 +108,7 @@ begin
     Button_LoadBack.OnClick := BackClick;
 
     MinimapView_Load := TKMMinimapView.Create(Panel_Load, 630, 555, 191, 191, True);
-    MinimapView_Load.Anchors := [anLeft];
+    MinimapView_Load.Anchors := [anLeft, anBottom];
 
     //Delete PopUp
     PopUp_Delete := TKMPopUpMenu.Create(Panel_Load, 450);

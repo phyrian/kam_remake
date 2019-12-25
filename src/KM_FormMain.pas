@@ -223,6 +223,7 @@ type
     procedure ToggleFullscreen(aFullscreen, aWindowDefaultParams: Boolean);
     procedure SetSaveEditableMission(aEnabled: Boolean);
     procedure SetExportGameStats(aEnabled: Boolean);
+    procedure UpdateSnowHouses;
   end;
 
 
@@ -319,6 +320,14 @@ end;
 procedure TFormMain.SetExportGameStats(aEnabled: Boolean);
 begin
   ExportGameStats.Enabled := aEnabled;
+end;
+
+
+procedure TFormMain.UpdateSnowHouses;
+begin
+  {$IFDEF WDC}
+  chkSnowHouses.Checked := SNOW_HOUSES;
+  {$ENDIF}
 end;
 
 
@@ -708,6 +717,12 @@ end;
 //Revert all controls to defaults (e.g. before MP session)
 procedure TFormMain.ControlsReset;
 
+  function SkipReset(aCtrl: TControl): Boolean;
+  begin
+    Result := {$IFDEF WDC} aCtrl = chkSnowHouses; {$ENDIF}
+              {$IFDEF FPC} False; {$ENDIF}
+  end;
+
   {$IFDEF WDC}
   procedure ResetCategoryPanel(aPanel: TCategoryPanel);
   var
@@ -719,9 +734,12 @@ procedure TFormMain.ControlsReset;
       PanelSurface := TCategoryPanelSurface(aPanel.Controls[0]);
       for I := 0 to PanelSurface.ControlCount - 1 do
       begin
+        if SkipReset(PanelSurface.Controls[I]) then Continue; //Skip reset for some controls
+
         if PanelSurface.Controls[I] is TCheckBox then
           TCheckBox(PanelSurface.Controls[I]).Checked :=    (PanelSurface.Controls[I] = chkBevel)
-                                                 or (PanelSurface.Controls[I] = chkLogNetConnection)
+                                                         or (PanelSurface.Controls[I] = chkLogNetConnection)
+                                                         or ((PanelSurface.Controls[I] = chkSnowHouses) and SNOW_HOUSES)
         else
         if PanelSurface.Controls[I] is TTrackBar then
           TTrackBar(PanelSurface.Controls[I]).Position := 0
@@ -748,6 +766,9 @@ procedure TFormMain.ControlsReset;
     I: Integer;
   begin
     for I := 0 to aBox.ControlCount - 1 do
+    begin
+      if SkipReset(aBox.Controls[I]) then Continue; //Skip reset for some controls
+
       if aBox.Controls[I] is TCheckBox then
         TCheckBox(aBox.Controls[I]).Checked :=    (aBox.Controls[I] = chkBevel)
                                                or (aBox.Controls[I] = chkLogNetConnection)
@@ -760,6 +781,7 @@ procedure TFormMain.ControlsReset;
       else
       if (aBox.Controls[I] is TGroupBox) then
         ResetGroup(TGroupBox(aBox.Controls[I]));
+    end;
   end;
   {$ENDIF}
 
@@ -862,10 +884,9 @@ begin
     SHOW_UIDs := chkUIDs.Checked;
     SHOW_SELECTED_OBJ_INFO := chkSelectedObjInfo.Checked;
     SHOW_HANDS_INFO := chkHands.Checked;
+
     {$IFDEF WDC} //one day update .lfm for lazarus...
     SHOW_JAM_METER := chkJamMeter.Checked;
-    SNOW_HOUSES := chkSnowHouses.Checked;
-    ALLOW_LOAD_UNSUP_VERSION_SAVE := chkLoadUnsupSaves.Checked;
     {$ENDIF}
 
     SKIP_RENDER := chkSkipRender.Checked;
@@ -897,6 +918,14 @@ begin
   SHOW_CONTROLS_OVERLAY := chkUIControlsBounds.Checked;
   SHOW_TEXT_OUTLINES := chkUITextBounds.Checked;
   SHOW_CONTROLS_ID := chkUIControlsID.Checked;
+
+  {$IFDEF WDC} //one day update .lfm for lazarus...
+  SNOW_HOUSES := chkSnowHouses.Checked;
+  gGameApp.GameSettings.AllowSnowHouses := SNOW_HOUSES;
+
+  ALLOW_LOAD_UNSUP_VERSION_SAVE := chkLoadUnsupSaves.Checked;
+  {$ENDIF}
+
 
   //Graphics
   if AllowDebugChange then

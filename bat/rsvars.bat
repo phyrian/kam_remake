@@ -11,6 +11,6 @@ call rsvars_local.bat
 @SET BuildFullDir=%BuildFullDir_LOCAL%
 @SET ScriptingEditorDir=%ScriptingEditorDir_LOCAL%
 @SET PATH=%FrameworkDir%;%FrameworkSDKDir%;%BDS%\bin;%BDS%\bin64;%PATH%
-@SET kam_version=Beta 10k+
+@SET kam_version=Beta
 
 @SET IncludeScriptingEditor=False

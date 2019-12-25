@@ -113,6 +113,9 @@ type
     fDayGamesCount: Integer;       //Number of games played today (used for saves namings)
     fLastDayGamePlayed: TDateTime; //Last day game played
 
+    //GameTweaks
+    fGameTweaks_AllowSnowHouses: Boolean;
+
     //Campaign
     fCampaignLastDifficulty: TKMMissionDifficulty;
 
@@ -203,6 +206,9 @@ type
 
     procedure SetDayGamesCount(aValue: Integer);
     procedure SetLastDayGamePlayed(aValue: TDateTime);
+
+    //GameTweaks
+    procedure SetAllowSnowHouses(aValue: Boolean);
 
     //Campaign
     procedure SetCampaignLastDifficulty(aValue: TKMMissionDifficulty);
@@ -306,6 +312,9 @@ type
 
     property DayGamesCount: Integer read fDayGamesCount write SetDayGamesCount;
     property LastDayGamePlayed: TDateTime read fLastDayGamePlayed write SetLastDayGamePlayed;
+
+    //GameTweaks
+    property AllowSnowHouses: Boolean read fGameTweaks_AllowSnowHouses write SetAllowSnowHouses;
 
     //Campaign
     property CampaignLastDifficulty: TKMMissionDifficulty read fCampaignLastDifficulty write SetCampaignLastDifficulty;
@@ -633,6 +642,8 @@ begin
     fWareDistribution.LoadFromStr(F.ReadString ('Game','WareDistribution',''));
     fSaveWareDistribution := F.ReadBool     ('Game', 'SaveWareDistribution', True); //Enabled by default
 
+    fGameTweaks_AllowSnowHouses := F.ReadBool('GameTweaks', 'AllowSnowHouses', False); //Disabled by default
+
     fCampaignLastDifficulty := TKMMissionDifficulty(F.ReadInteger('Campaign', 'CampaignLastDifficulty', Byte(mdNormal))); //Normal as default
 
     fReplayAutopause    := F.ReadBool       ('Replay', 'ReplayAutopause',   False); //Disabled by default
@@ -761,6 +772,8 @@ begin
 
     F.WriteString ('Game','WareDistribution', fWareDistribution.PackToStr);
     F.WriteBool   ('Game','SaveWareDistribution', fSaveWareDistribution);
+
+    F.WriteBool   ('GameTweaks','AllowSnowHouses', fGameTweaks_AllowSnowHouses);
 
     F.WriteInteger('Campaign','CampaignLastDifficulty', Byte(fCampaignLastDifficulty));
 
@@ -1092,6 +1105,13 @@ end;
 procedure TKMGameSettings.SetLastDayGamePlayed(aValue: TDateTime);
 begin
   fLastDayGamePlayed := aValue;
+  Changed;
+end;
+
+
+procedure TKMGameSettings.SetAllowSnowHouses(aValue: Boolean);
+begin
+  fGameTweaks_AllowSnowHouses := aValue;
   Changed;
 end;
 

@@ -209,6 +209,9 @@ begin
       Inc(I);
     end;
 
+    //Show DropList Up to fit 1024 height screen
+    DropBox_Difficulty.DropUp := DropBox_Difficulty.Count > 3;
+
     if not DropBox_Difficulty.IsSelected then
       DropBox_Difficulty.ItemIndex := 0;
 

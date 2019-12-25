@@ -2264,10 +2264,10 @@ begin
 
   //These values have been measured from KaM
   case aRes of
-    wtGoldOre: begin R1:=144; R2:=145; R3:=146; R3_2:= -1; R4:=147; R5:= -1; end;
-    wtIronOre: begin R1:=148; R2:=149; R3:=150; R3_2:=259; R4:=151; R5:=260; end;
-    wtCoal:    begin R1:=152; R2:=153; R3:=154; R3_2:= -1; R4:=155; R5:=263; end;
-    else        begin R1:= -1; R2:= -1; R3:= -1; R3_2:= -1; R4:= -1; R5:= -1; end;
+    wtGoldOre: begin R1 := 144; R2 := 145; R3 := 146; R3_2 :=  -1; R4 := 147; R5 := 308; end;
+    wtIronOre: begin R1 := 148; R2 := 149; R3 := 150; R3_2 := 259; R4 := 151; R5 := 260; end;
+    wtCoal:    begin R1 := 152; R2 := 153; R3 := 154; R3_2 :=  -1; R4 := 155; R5 := 263; end;
+    else       begin R1 :=  -1; R2 :=  -1; R3 :=  -1; R3_2 :=  -1; R4 :=  -1; R5 :=  -1; end;
   end;
 
   for I := Max(aLoc.Y - MiningRect.Top, 1) to Min(aLoc.Y + MiningRect.Bottom, fMapY - 1) do
@@ -3048,21 +3048,22 @@ begin
 
   Result := true;
   case Land[Loc.Y,Loc.X].BaseLayer.Terrain of
-    144: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=157+KaMRandom(3, 'TKMTerrain.DecOreDeposit'); //Gold
-    145: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=144;
-    146: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=145;
-    147: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=146;
-    148: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=160+KaMRandom(4, 'TKMTerrain.DecOreDeposit 2'); //Iron
-    149: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=148;
-    150: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=149;
-    259: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=149;
-    151: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=150+KaMRandom(2, 'TKMTerrain.DecOreDeposit 3')*(259-150);
-    260: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=151;
-    152: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=35 +KaMRandom(2, 'TKMTerrain.DecOreDeposit 4'); //Coal
-    153: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=152;
-    154: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=153;
-    155: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=154;
-    263: Land[Loc.Y,Loc.X].BaseLayer.Terrain:=155;
+    144: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 157 + KaMRandom(3, 'TKMTerrain.DecOreDeposit'); //Gold
+    145: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 144;
+    146: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 145;
+    147: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 146;
+    308: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 147;
+    148: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 160 + KaMRandom(4, 'TKMTerrain.DecOreDeposit 2'); //Iron
+    149: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 148;
+    150: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 149;
+    259: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 149;
+    151: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 150 + KaMRandom(2, 'TKMTerrain.DecOreDeposit 3')*(259 - 150);
+    260: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 151;
+    152: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 35  + KaMRandom(2, 'TKMTerrain.DecOreDeposit 4'); //Coal
+    153: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 152;
+    154: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 153;
+    155: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 154;
+    263: Land[Loc.Y,Loc.X].BaseLayer.Terrain := 155;
     else Result := false;
   end;
   Land[Loc.Y,Loc.X].BaseLayer.Rotation := KaMRandom(4, 'TKMTerrain.DecOreDeposit 5');
@@ -3296,7 +3297,6 @@ var
   isFree, isOffroad, isPushable, exchWithPushedPusher, exchWithPushedPusherChoosen: Boolean;
   newWeight, bestWeight: Single;
   TempUnit: TKMUnit;
-  weigthedList: TKMWeightedPointList;
 begin
   U := TKMUnit(aUnit);
   Loc := U.CurrPosition;
