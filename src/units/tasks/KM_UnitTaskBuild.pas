@@ -273,6 +273,7 @@ begin
        end;
     8: begin
          gTerrain.SetRoad(fLoc, Owner);
+         gTerrain.
          gTerrain.RemoveObjectsKilledByRoad(fLoc);
          SetActionStay(5, uaWalk);
          gTerrain.UnlockTile(fLoc);

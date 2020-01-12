@@ -199,7 +199,6 @@ TX_MSG_TROOP_HUNGRY = 180; //This troop is really hungry, they better get someth
 TX_POPUP_PAUSE = 181; //PAUSE
 
 TX_UNIT_TASK_DELVERING = 182; //Delivering
-//FIXME: TX_UNIT_TASK_TRANSFERING = 1262; //Transfering
 TX_UNIT_TASK_ROAD = 183; //Constructing road
 TX_UNIT_TASK_FIELD = 184; //Digging field
 TX_UNIT_TASK_WINEFIELD = 185; //Constructing winefield
@@ -228,6 +227,7 @@ TX_UNIT_TASK_DISMISS_CONFIRMATION = 1141; //Do you really want to dismiss this u
 TX_UNIT_TASK_DISMISS_HINT = 1142; //Dismiss unit
 TX_UNIT_TASK_DISMISS_CANCEL_HINT = 1143; //Cancel unit dismiss
 TX_UNIT_TASK_DISMISS_NOSCHOOLS_HINT = 1144; //Dismiss is not available because of lack of schools in your town
+//FIXME: TX_UNIT_TASK_TRANSFERING = 1262; //Transfering
 
 TX_MUSIC__29 = 205; //Spirit
 TX_MUSIC_BUSY = 206; //Busy
@@ -308,8 +308,7 @@ TX_RESOURCES_ALL = 276; //All wares
 TX_RESOURCES_WARFARE = 277; //Warfare
 TX_RESOURCES_FOOD = 278; //Food
 
-TX_CREDITS_TEXT = 279; //JOYMANIA ENTERTAINMENT||PROGRAMMING:|Peter Ohlmann||GAME GRAPHICS:|Adam Sprys||LEVEL DESIGN:|Adam Sprys|AndrA© QuaAY||SOUND EDITING AND MIXING:|Tonstudio Mannheim||MUSIC:|Gerd Hofmann|Joachim SchA¤fer|JA?rgen Rebhann|Klaus Staendike|Steffen SchA?ngel||ILLUSTRATIONS:|Boleslaw Kasza|Christoph Werner||TRANSLATION:|Ronnie Shankland|Patricia Bellantuono|Andrea Rumpelt|||ZUXXEZ ENTERTAINMENT AG||PRODUCER:|Uwe SchA¤fer||MANUAL:|Peter Ohlmann|Uwe SchA¤fer||BETA TESTING:|Peter Ohlmann|Adam Sprys|Alexandra Constandache|Dirk P. Hassinger|Achim Heidelauf|Uwe SchA¤fer|Ingrid SchA¤fer|Dirk U. Jantz|Ion Constandache|Yaman Egeli|Roman Eich|Iris Mocsnek|Anke Jantz|Paul Hassinger|Liza Hassinger||GAMES DIRECTOR:|Achim Heidelauf||PUBLISHED BY:|TopWare Interactive||CUTSCENES:||DIRECTION:|Slawomir Jedrzejewski||Kajetan Czarnecki|Wojciech Drazek|Daniel Duplaga|Rafal Januszkiewicz|Andrzej Rams|Piotr Rulka|Krzysztof Rybczynski|Grzegorz Wisniewski||VOICES:|Claus Boyen (Storyteller)||Tim Timmermann|Peter Houska|Dirk MA?hlbach|Ralf Ditze|Gerhard Piske|Gernot Wassmann||ARTWORK:|Boleslaw Kasza|Adam Sprys||OPENING ANIMATION:|Uwe SchA¤fer|Christian Bigalk|Additional 3D-Modelling:|Niels Horstmann||SPECIAL THANKS TO:|Tadeusz Zuber|Dieter Ohlmann|Alexandra Constandache|Ingrid SchA¤fer
-
+TX_CREDITS_TEXT = 279; //It was too long and compiler had an error cuz of it - Phyrian
 TX_MENU_MISSION_CANCELED = 280; //Mission canceled
 TX_MENU_REPLAY_ENDED = 281; //Replay ended
 TX_MENU_TUTORIAL_TOWN = 282; //Town Tutorial
