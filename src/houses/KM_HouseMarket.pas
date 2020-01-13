@@ -41,7 +41,7 @@ type
     property ResTo: TKMWareType read fResTo write SetResTo;
     function RatioFrom: Byte;
     function RatioTo: Byte;
-    property MarketResToTrade[aWare: TKMWaeType]: Word read GetMarketResToTrade write SetMarketResToTrade;
+    property MarketResToTrade[aWare: TKMWareType]: Word read GetMarketResToTrade write SetMarketResToTrade;
     property TradeAmount: Word read fTradeAmount write fTradeAmount; //FIXME: Set Get
 
     function ShouldAbandonDeliveryFrom(aWareType: TKMWareType; aImmidiateCheck: Boolean = False): Boolean; override;
